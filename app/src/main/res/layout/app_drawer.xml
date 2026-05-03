@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--    android:background="#9A000000"-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="bottom"
+    android:paddingHorizontal="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/app_list"
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="12dp"
+        android:clipToPadding="false"
+        />
+    <EditText
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:layout_marginBottom="12dp"
+        android:hint="search apps..."
+        android:textColorHint="@android:color/darker_gray"
+        android:drawableEnd="@drawable/search"
+        android:lines="1"
+        android:inputType="text"
+        android:imeOptions="actionSearch"
+        android:background="@drawable/searchbar_capsule"
+        android:textColor="@android:color/white"
+        />
+</LinearLayout>

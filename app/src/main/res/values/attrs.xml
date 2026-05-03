@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ModalItem">
+        <attr name="label" format="string" />
+        <attr name="icon" format="reference" />
+    </declare-styleable>
+    <declare-styleable name="CustomTextView">
+        <attr name="strokeSize" format="dimension" />
+        <attr name="android:textSize" format="dimension" />
+        <attr name="android:textColor" format="color"/>
+        <attr name="android:text" format="string" />
+        <attr name="android:fontFamily" format="reference" />
+    </declare-styleable>
+</resources>

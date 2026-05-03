@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:layout_marginBottom="12dp"
+        android:textSize="25sp" />
+    <TextView
+        android:id="@+id/changeWallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Change wallpaper"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+    <TextView
+        android:id="@+id/editFavList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Edit List"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+    <TextView
+        android:id="@+id/defaultLauncherSetup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Set as default Launcher"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+</LinearLayout>

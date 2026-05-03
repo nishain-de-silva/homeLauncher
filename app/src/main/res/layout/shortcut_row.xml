@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView
+        android:id="@+id/shortcutLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingVertical="12dp"
+        android:text="App Info"
+        android:textSize="15sp"
+        android:layout_marginEnd="20dp"/>
+    <ImageView
+        android:id="@+id/shortcutIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp" />
+</merge>

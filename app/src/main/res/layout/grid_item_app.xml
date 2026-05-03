@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@drawable/selectable"
+    android:gravity="center_horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="48dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginHorizontal="5dp"
+        android:layout_height="48dp" />
+        <View
+            android:id="@+id/freshAppIndicator"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_gravity="top|end"
+            android:background="@drawable/red_circle" />
+    </FrameLayout>
+    <com.ndds.homelauncher.widgets.CustomTextView
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        app:strokeSize="2dp"
+        android:id="@+id/name"
+        android:layout_marginTop="12dp"
+        android:textColor="@android:color/white"
+        android:textAlignment="center"
+        android:text="app name"
+        android:textSize="12sp"
+        android:ellipsize="end"/>
+</LinearLayout>
