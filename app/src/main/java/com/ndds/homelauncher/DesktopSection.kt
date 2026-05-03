@@ -1,9 +1,11 @@
 package com.ndds.homelauncher
 
 import android.app.WallpaperManager
+import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.hardware.camera2.CameraManager
 import android.net.ConnectivityManager
@@ -45,6 +47,9 @@ class DesktopSection(val appContext: MainActivity) {
                     val inputImage = BitmapFactory.decodeStream(imageStream)
                     imageStream?.close() // Important to close the stream
                     WallpaperManager.getInstance(appContext).setBitmap(inputImage)
+                    appContext.openFileOutput("wallpaper.jpg", Context.MODE_PRIVATE).use {
+                        inputImage.compress(Bitmap.CompressFormat.JPEG, 95, it)
+                    }
                 } catch (e: Exception) {
                     throw RuntimeException(e)
                 }

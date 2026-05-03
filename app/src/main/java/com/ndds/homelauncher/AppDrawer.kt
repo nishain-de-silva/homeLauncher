@@ -3,6 +3,10 @@ package com.ndds.homelauncher
 import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,9 +16,11 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.ImageView
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.io.File
 
 class AppDrawer(
     val appContext: MainActivity,
@@ -59,10 +65,13 @@ class AppDrawer(
         rootView.findViewById<EditText>(R.id.search_bar).setText("")
 
         val homeSection = desktopSection.rootView
+        val wallpaperImage = getWallpaperWidget()
+        wallpaperImage.visibility = View.VISIBLE
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = animator.animatedFraction
             homeSection.alpha = 1 - animator.animatedFraction
+            wallpaperImage.alpha = animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 homeSection.visibility = View.GONE
                 if (focusSearchBar)
@@ -80,6 +89,8 @@ class AppDrawer(
     fun closeDrawerImmediately() {
         desktopSection.rootView.alpha = 1f
         desktopSection.rootView.visibility = View.VISIBLE
+        val wallpaperImage = getWallpaperWidget()
+        wallpaperImage.visibility = View.GONE
         val imm = appContext.getSystemService(InputMethodManager::class.java)
         rootView.findViewById<EditText>(R.id.search_bar).let {
             if (it.isFocused)
@@ -88,6 +99,7 @@ class AppDrawer(
         isDrawerOpen = false
         rootView.visibility = View.GONE
     }
+    fun getWallpaperWidget() = (containerView.parent as ViewGroup).findViewById<ImageView>(R.id.wallpaper)
     fun closeDrawer() {
         if (!isDrawerOpen) return
         val valueAnimator = ValueAnimator.ofInt(0, containerView.findViewById<ViewGroup>(R.id.root).height)
@@ -100,13 +112,16 @@ class AppDrawer(
                 imm.hideSoftInputFromWindow(it.windowToken, 0)
         }
         rootView.alpha = 1f
+        val wallpaperImage = getWallpaperWidget()
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = 1 - animator.animatedFraction
+            wallpaperImage.alpha = 1 - animator.animatedFraction
             homeSection.alpha = animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 isDrawerOpen = false
                 rootView.visibility = View.GONE
+                wallpaperImage.visibility = View.GONE
             }
         }
         homeSection.visibility = View.VISIBLE

@@ -1,25 +1,24 @@
 package com.ndds.homelauncher
 
-import android.Manifest
-import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
@@ -40,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars()
                         or WindowInsetsCompat.Type.displayCutout()
-                    or WindowInsetsCompat.Type.ime()
+                        or WindowInsetsCompat.Type.ime()
             )
             v.updatePadding(
                 left = v.paddingLeft,
@@ -56,38 +55,15 @@ class MainActivity : AppCompatActivity() {
                 desktopSection.dismissEditStateIfNeeded()
             }
         })
-
-        val requestPermissionLauncher =
-            registerForActivityResult<String?, Boolean?>(
-                RequestPermission(),
-                ActivityResultCallback { isGranted: Boolean ->
-                    if (isGranted) {
-                        loadWallpaper()
-                    }
-                }
-            )
-
-        if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.MANAGE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED)
-            loadWallpaper()
-        else
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+        val wallpaper = File(filesDir, "wallpaper.jpg")
+        if (wallpaper.exists()) {
+            val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
+            wallpaperImage.setImageBitmap(BitmapFactory.decodeFile(wallpaper.absolutePath))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP))
+            }
+        }
     }
-
-    fun loadWallpaper() {
-//        val wallpaperManager = WallpaperManager.getInstance(this)
-//        val pfd: ParcelFileDescriptor? =
-//            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM)
-//
-//        if (pfd != null) {
-//            val fd = pfd.getFileDescriptor()
-//            val bitmap = BitmapFactory.decodeFileDescriptor(fd)
-//            findViewById<ImageView>(R.id.wallpaper).setImageBitmap(bitmap)
-//            pfd.close()
-//        }
-    }
-
 
     private fun registerInstallationReceiver() {
         if (appInstallationListener != null) {
@@ -99,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED)
         intentFilter.addAction(Intent.ACTION_TIME_TICK)
         intentFilter.addDataScheme("package")
-        appInstallationListener = object: BroadcastReceiver() {
+        appInstallationListener = object : BroadcastReceiver() {
             override fun onReceive(p1: Context?, intent: Intent?) {
                 if (intent == null) return
                 if (intent.action == Intent.ACTION_TIME_TICK) {
@@ -118,12 +94,14 @@ class MainActivity : AppCompatActivity() {
                             PackageManager.MATCH_ALL
                         )
                         for (resolveInfo in resolveInfos) {
-                            appDrawer.addApp(AppInfo(
-                                resolveInfo.loadLabel(packageManager).toString(),
-                                resolveInfo.activityInfo.applicationInfo.packageName,
-                                resolveInfo.activityInfo.name,
-                                resolveInfo.loadIcon(packageManager)
-                            ), isFreshInstall)
+                            appDrawer.addApp(
+                                AppInfo(
+                                    resolveInfo.loadLabel(packageManager).toString(),
+                                    resolveInfo.activityInfo.applicationInfo.packageName,
+                                    resolveInfo.activityInfo.name,
+                                    resolveInfo.loadIcon(packageManager)
+                                ), isFreshInstall
+                            )
                         }
                     } catch (e: PackageManager.NameNotFoundException) {
                         throw RuntimeException(e)
@@ -134,7 +112,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        ContextCompat.registerReceiver(this, appInstallationListener , intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            appInstallationListener,
+            intentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onResume() {

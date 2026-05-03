@@ -2,14 +2,16 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/wallpaper"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     <FrameLayout
         android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <ImageView
-            android:id="@+id/wallpaper"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
         <LinearLayout
             android:id="@+id/home_section"
             android:orientation="vertical"
@@ -27,7 +29,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-
                     <com.ndds.homelauncher.widgets.CustomTextView
                         android:id="@+id/time"
                         android:textColor="@android:color/white"
@@ -78,8 +79,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
                  />
-
-
         </LinearLayout>
     </FrameLayout>
 </FrameLayout>
