@@ -66,14 +66,13 @@ class MainActivity : AppCompatActivity() {
         val wallpaper = File(filesDir, "wallpaper.jpg")
         if (wallpaper.exists()) {
             val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
+            val image = BitmapFactory.decodeFile(wallpaper.absolutePath)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                wallpaperImage.setImageBitmap(image)
                 wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f,80f, Shader.TileMode.CLAMP))
             } else {
                 wallpaperImage.setImageBitmap(
-                    blurImageBackwardCompatible(
-                        BitmapFactory.decodeFile(wallpaper.absolutePath),
-                        80f
-                    )
+                    blurImageBackwardCompatible(image, 80f)
                 )
             }
         }
