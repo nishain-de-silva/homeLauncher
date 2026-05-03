@@ -1,15 +1,22 @@
 package com.ndds.homelauncher
 
+import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
+import android.renderscript.Allocation
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicBlur
+import android.view.View
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +26,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import java.io.File
+import kotlin.math.min
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,11 +66,40 @@ class MainActivity : AppCompatActivity() {
         val wallpaper = File(filesDir, "wallpaper.jpg")
         if (wallpaper.exists()) {
             val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
-            wallpaperImage.setImageBitmap(BitmapFactory.decodeFile(wallpaper.absolutePath))
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP))
+                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f,80f, Shader.TileMode.CLAMP))
+            } else {
+                wallpaperImage.setImageBitmap(
+                    blurImageBackwardCompatible(
+                        BitmapFactory.decodeFile(wallpaper.absolutePath),
+                        80f
+                    )
+                )
             }
         }
+        findViewById<View>(R.id.root).apply {
+            post {
+                WallpaperManager.getInstance(this@MainActivity).setWallpaperOffsets(windowToken, 0.5f, 0.5f)
+            }
+        }
+    }
+
+    fun blurImageBackwardCompatible(image: Bitmap, radius: Float): Bitmap {
+        val output = Bitmap.createBitmap(image)
+
+        val rs = RenderScript.create(this)
+        val input = Allocation.createFromBitmap(rs, image)
+        val outputAlloc = Allocation.createFromBitmap(rs, output)
+
+        val blur = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
+        blur.setRadius(min(radius, 25f))
+        blur.setInput(input)
+        blur.forEach(outputAlloc)
+
+        outputAlloc.copyTo(output)
+        rs.destroy()
+
+        return output
     }
 
     private fun registerInstallationReceiver() {

@@ -14,6 +14,7 @@ import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -46,7 +47,8 @@ class DesktopSection(val appContext: MainActivity) {
                     val imageStream = appContext.contentResolver.openInputStream(uri)
                     val inputImage = BitmapFactory.decodeStream(imageStream)
                     imageStream?.close() // Important to close the stream
-                    WallpaperManager.getInstance(appContext).setBitmap(inputImage)
+                    val wallpaperManager = WallpaperManager.getInstance(appContext)
+                    wallpaperManager.setBitmap(inputImage)
                     appContext.openFileOutput("wallpaper.jpg", Context.MODE_PRIVATE).use {
                         inputImage.compress(Bitmap.CompressFormat.JPEG, 95, it)
                     }

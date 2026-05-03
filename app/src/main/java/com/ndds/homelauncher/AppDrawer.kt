@@ -1,13 +1,20 @@
 package com.ndds.homelauncher
 
 import android.animation.ValueAnimator
+import android.app.WallpaperManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.util.Log
+import android.view.Display
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,10 +24,14 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.core.graphics.luminance
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
+import java.util.Random
+import kotlin.math.max
+import kotlin.math.min
 
 class AppDrawer(
     val appContext: MainActivity,
@@ -66,12 +77,13 @@ class AppDrawer(
 
         val homeSection = desktopSection.rootView
         val wallpaperImage = getWallpaperWidget()
+//        wallpaperImage.setImageBitmap(generateMask(containerView))
         wallpaperImage.visibility = View.VISIBLE
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = animator.animatedFraction
-            homeSection.alpha = 1 - animator.animatedFraction
             wallpaperImage.alpha = animator.animatedFraction
+            homeSection.alpha = 1 - animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 homeSection.visibility = View.GONE
                 if (focusSearchBar)
