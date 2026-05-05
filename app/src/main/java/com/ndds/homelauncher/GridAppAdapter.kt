@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.ndds.homelauncher.widgets.CustomTextView
 
@@ -19,7 +20,7 @@ class GridAppAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.icon)
         val name: CustomTextView = view.findViewById(R.id.name)
-        val freshAppIndicator: View = view.findViewById(R.id.freshAppIndicator)
+        val indicator: ImageView = view.findViewById(R.id.indicator)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -37,28 +38,41 @@ class GridAppAdapter(
         val searchText = searchText.trim()
         if (searchText.isEmpty())
             filteredApps = apps
-        else
-            filteredApps = apps.filter { original -> original.name.split(" ").any { it.startsWith(searchText, true) } }
+        else {
+            filteredApps = apps.filter { original ->
+                original.name.split(" ").any { it.startsWith(searchText, true) }
+            }
+            if (filteredApps.isEmpty())
+                filteredApps = apps.filter { original ->
+                    original.name.split(" ").any { it.contains(searchText, true) }
+                }
+
+        }
         this.notifyDataSetChanged()
     }
 
 
     override fun getItemCount() = filteredApps.size
 
-    private fun launchApp(app: AppInfo) {
-        val intent = Intent().setComponent(ComponentName(app.packageName, app.activityName))
-            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        appContext.startActivity(intent)
-    }
+
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val app = filteredApps[position]
         holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
-        holder.freshAppIndicator.visibility = if (app.isFresh) View.VISIBLE else View.GONE
+        if (app.isFresh || app.isLastUsed) {
+            holder.indicator.visibility = View.VISIBLE
+            holder.indicator.setImageDrawable(
+                AppCompatResources.getDrawable(
+                    appContext,
+                    if (app.isLastUsed) R.drawable.recent else R.drawable.download_cloud
+                )
+            )
+        } else
+            holder.indicator.visibility = View.GONE
 
         holder.itemView.setOnClickListener {
-            launchApp(app)
+            appContext.launchApp(app)
         }
         holder.itemView.setOnLongClickListener {
             ModalService(appContext).showAppDetail(app, true)
@@ -68,6 +82,6 @@ class GridAppAdapter(
 
     fun launchFirstApp() {
         if (filteredApps.isNotEmpty())
-            launchApp(filteredApps[0])
+            appContext.launchApp(filteredApps[0])
     }
 }

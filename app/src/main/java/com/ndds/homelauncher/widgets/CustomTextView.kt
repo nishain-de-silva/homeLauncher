@@ -13,24 +13,30 @@ import android.util.TypedValue
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.setPadding
 import com.ndds.homelauncher.R
+import com.ndds.homelauncher.TextLayout
 
 class CustomTextView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+    private var enforceContrast: Boolean
     var text: CharSequence = ""
         set(value) {
             field = value
             requestLayout()
             invalidate()
         }
-    var staticLayout: StaticLayout? = null
+    var staticLayout: TextLayout? = null
     private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+    private val backdropPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+    private var curveRadius = 0f
     private var textColor = 0
 
     init {
         val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CustomTextView)
-
+        backdropPaint.style = Paint.Style.FILL
+        backdropPaint.color = context.getColor(R.color.transparent_black)
         try {
             // 1. Get Text
             text = typedArray.getString(R.styleable.CustomTextView_android_text) ?: ""
@@ -42,6 +48,7 @@ class CustomTextView @JvmOverloads constructor(
             // 3. Get Size (Default to 15sp converted to pixels)
             val defaultSize = 15f * context.resources.displayMetrics.scaledDensity
             val textSize = typedArray.getDimension(R.styleable.CustomTextView_android_textSize, defaultSize)
+            curveRadius = textSize
             val defaultStrokeSize = 2f * context.resources.displayMetrics.scaledDensity
             val strokeWidth = typedArray.getDimension(R.styleable.CustomTextView_strokeSize, defaultStrokeSize)
             textPaint.textSize = textSize
@@ -49,6 +56,7 @@ class CustomTextView @JvmOverloads constructor(
             textPaint.strokeJoin = Paint.Join.ROUND
             textPaint.strokeMiter = 10f
 
+            enforceContrast = typedArray.getBoolean(R.styleable.CustomTextView_enforceContrast, false)
             // 4. Get Custom Font
             val fontResId = typedArray.getResourceId(R.styleable.CustomTextView_android_fontFamily, -1)
             if (fontResId != -1) {
@@ -86,30 +94,29 @@ class CustomTextView @JvmOverloads constructor(
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
 
         // 1. Determine the width we can use for the text
-        val availableWidth = if (widthMode == MeasureSpec.EXACTLY) {
-            widthSize
-        } else {
-            // For wrap_content, we can pick a max preferred width or measure the text line
-            Math.min(textPaint.measureText(text.toString()).toInt(), widthSize)
-        }
+        val availableWidth = widthSize - paddingLeft - paddingRight
 
         // 2. Create the Layout (This handles the word breaking)
-        staticLayout = StaticLayout.Builder.obtain(text, 0, text.length, textPaint, availableWidth)
-            .setAlignment(Layout.Alignment.ALIGN_CENTER)
-            .setLineSpacing(0f, 1f)
-            .setIncludePad(true)
-            .build()
+        staticLayout = TextLayout(textPaint, text.toString(), availableWidth)
 
         // 3. Set the final dimensions
-        val finalWidth = if (widthMode == MeasureSpec.EXACTLY) widthSize else staticLayout!!.width
-        val finalHeight = staticLayout!!.height + paddingTop + paddingBottom
+        val staticLayout = staticLayout!!
+        var finalWidth: Int
+        if (widthMode == MeasureSpec.EXACTLY)
+            finalWidth = widthSize
+        else {
+            finalWidth = (staticLayout.getWidth() + paddingLeft + paddingRight).toInt()
+        }
+        val finalHeight = staticLayout.getHeight() + paddingTop + paddingBottom
 
-        setMeasuredDimension(finalWidth, finalHeight)
+        setMeasuredDimension(finalWidth, finalHeight.toInt())
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.save()
+        if (enforceContrast)
+            canvas.drawRoundRect(0f,0f,width.toFloat(), height.toFloat(), paddingLeft.toFloat(),paddingLeft.toFloat(), backdropPaint)
         // Offset for padding
         canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
 

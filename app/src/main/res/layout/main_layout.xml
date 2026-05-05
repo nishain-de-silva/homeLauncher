@@ -4,8 +4,9 @@
     android:layout_height="match_parent">
     <ImageView
         android:id="@+id/wallpaper"
-        android:scaleType="centerCrop"
+        android:background="@color/transparent_black"
         android:visibility="gone"
+        android:scaleType="centerCrop"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     <FrameLayout
@@ -18,17 +19,20 @@
             android:gravity="bottom"
             android:paddingHorizontal="35dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            >
+            android:layout_height="match_parent">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="15dp"
                 android:gravity="center_vertical">
                 <LinearLayout
+                    android:paddingVertical="5dp"
+                    android:paddingHorizontal="10dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:background="@drawable/transparent_black_box">
                     <com.ndds.homelauncher.widgets.CustomTextView
                         android:id="@+id/time"
                         android:textColor="@android:color/white"
@@ -42,7 +46,7 @@
                         android:textColor="@android:color/white"
                         android:text="date"
                         android:textSize="20sp"
-                        android:layout_marginVertical="10dp"
+                        android:layout_marginVertical="5dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         />
@@ -51,7 +55,6 @@
                         android:text="connection status"
                         android:textSize="15sp"
                         android:textColor="@android:color/white"
-                        android:layout_marginBottom="15dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         />
@@ -60,11 +63,13 @@
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_weight="1" />
-                <View
+                <ImageView
                     android:id="@+id/action_edit_fav_list"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/edit"
+                    android:layout_width="37dp"
+                    android:layout_height="37dp"
+                    android:padding="7dp"
+                    android:src="@drawable/edit"
+                    android:background="@drawable/back_transparent_circle"
                     />
             </LinearLayout>
             <androidx.recyclerview.widget.RecyclerView

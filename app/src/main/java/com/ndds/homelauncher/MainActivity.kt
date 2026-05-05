@@ -2,6 +2,7 @@ package com.ndds.homelauncher
 
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -10,8 +11,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -26,13 +30,17 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import java.io.File
+import java.io.FileInputStream
 import kotlin.math.min
+import androidx.core.net.toUri
 
 
 class MainActivity : AppCompatActivity() {
     private var appInstallationListener: BroadcastReceiver? = null
     lateinit var appDrawer: AppDrawer
+    var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
+    var promptedStorageAccess = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,23 +71,54 @@ class MainActivity : AppCompatActivity() {
                 desktopSection.dismissEditStateIfNeeded()
             }
         })
-        val wallpaper = File(filesDir, "wallpaper.jpg")
-        if (wallpaper.exists()) {
-            val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
-            val image = BitmapFactory.decodeFile(wallpaper.absolutePath)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                wallpaperImage.setImageBitmap(image)
-                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f,80f, Shader.TileMode.CLAMP))
-            } else {
-                wallpaperImage.setImageBitmap(
-                    blurImageBackwardCompatible(image, 80f)
-                )
-            }
-        }
         findViewById<View>(R.id.root).apply {
             post {
                 WallpaperManager.getInstance(this@MainActivity).setWallpaperOffsets(windowToken, 0.5f, 0.5f)
             }
+        }
+        configureWallpaper()
+    }
+
+    fun configureWallpaper() {
+        val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
+        var bitmap: Bitmap
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                val file = WallpaperManager.getInstance(this)
+                    .getWallpaperFile(WallpaperManager.FLAG_SYSTEM)!!
+                bitmap = BitmapFactory.decodeFileDescriptor(file.fileDescriptor)
+                file.close()
+                if (promptedStorageAccess)
+                    promptedStorageAccess = false
+            } else {
+                if (!promptedStorageAccess) {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    intent.data = "package:${packageName}".toUri()
+                    startActivity(intent)
+                    promptedStorageAccess = true
+                    return
+                } else {
+                    val wallpaper = File(filesDir, "wallpaper.jpg")
+                    if (wallpaper.exists()) {
+                        bitmap = BitmapFactory.decodeFile(wallpaper.absolutePath)
+                    } else
+                        return
+                }
+            }
+        } else {
+            val wallpaper = File(filesDir, "wallpaper.jpg")
+            if (wallpaper.exists()) {
+                bitmap = BitmapFactory.decodeFile(wallpaper.absolutePath)
+            } else
+                return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            wallpaperImage.setImageBitmap(bitmap)
+//            wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f,80f, Shader.TileMode.CLAMP))
+        } else {
+//            wallpaperImage.setImageBitmap(
+//                blurImageBackwardCompatible(bitmap, 80f)
+//            )
         }
     }
 
@@ -156,8 +195,24 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    fun launchApp(app: AppInfo) {
+        val intent = Intent().setComponent(ComponentName(app.packageName, app.activityName))
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        lastUsedApp?.isLastUsed = false
+        app.isLastUsed = true
+        lastUsedApp = app
+        startActivity(intent)
+    }
+
     override fun onResume() {
         super.onResume()
+        if (promptedStorageAccess) {
+            configureWallpaper()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                Environment.isExternalStorageManager()) {
+
+            }
+        }
         registerInstallationReceiver()
         desktopSection.onResume()
         appDrawer.refreshData()

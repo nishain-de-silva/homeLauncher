@@ -9,6 +9,7 @@
         <attr name="android:textSize" format="dimension" />
         <attr name="android:textColor" format="color"/>
         <attr name="android:text" format="string" />
+        <attr name="enforceContrast" format="boolean" />
         <attr name="android:fontFamily" format="reference" />
     </declare-styleable>
 </resources>

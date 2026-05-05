@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
      String activityName;
      Drawable icon;
      boolean isPinned;
+     boolean isLastUsed;
      boolean isFresh;
 
      public AppInfo(String name, String packageName, String activityName, Drawable icon) {

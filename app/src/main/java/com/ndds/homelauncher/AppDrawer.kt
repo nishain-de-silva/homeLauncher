@@ -1,20 +1,11 @@
 package com.ndds.homelauncher
 
 import android.animation.ValueAnimator
-import android.app.WallpaperManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.hardware.display.DisplayManager
 import android.os.Build
-import android.util.Log
-import android.view.Display
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,14 +15,9 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
-import androidx.core.graphics.luminance
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.io.File
-import java.util.Random
-import kotlin.math.max
-import kotlin.math.min
 
 class AppDrawer(
     val appContext: MainActivity,
@@ -70,19 +56,22 @@ class AppDrawer(
         if (isDrawerOpen) return
         rootView.alpha = 0f
         rootView.visibility = View.VISIBLE
+        rootView.findViewById<RecyclerView>(R.id.app_list).scrollToPosition(0)
         val valueAnimator = ValueAnimator.ofInt(containerView.height, 0)
         valueAnimator.interpolator = DecelerateInterpolator()
-        valueAnimator.duration = 400
+        valueAnimator.duration = 500
         rootView.findViewById<EditText>(R.id.search_bar).setText("")
 
         val homeSection = desktopSection.rootView
         val wallpaperImage = getWallpaperWidget()
-//        wallpaperImage.setImageBitmap(generateMask(containerView))
         wallpaperImage.visibility = View.VISIBLE
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = animator.animatedFraction
-            wallpaperImage.alpha = animator.animatedFraction
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val blur = 1 + (animator.animatedFraction * 79)
+                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
+            }
             homeSection.alpha = 1 - animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 homeSection.visibility = View.GONE
@@ -111,12 +100,12 @@ class AppDrawer(
         isDrawerOpen = false
         rootView.visibility = View.GONE
     }
-    fun getWallpaperWidget() = (containerView.parent as ViewGroup).findViewById<ImageView>(R.id.wallpaper)
+    fun getWallpaperWidget() = (containerView.parent as ViewGroup).findViewById<View>(R.id.wallpaper)
     fun closeDrawer() {
         if (!isDrawerOpen) return
         val valueAnimator = ValueAnimator.ofInt(0, containerView.findViewById<ViewGroup>(R.id.root).height)
         valueAnimator.interpolator = AccelerateInterpolator()
-        valueAnimator.duration = 400
+        valueAnimator.duration = 500
         val homeSection = containerView.findViewById<ViewGroup>(R.id.home_section)
         val imm = appContext.getSystemService(InputMethodManager::class.java)
         rootView.findViewById<EditText>(R.id.search_bar).let {
@@ -128,7 +117,10 @@ class AppDrawer(
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = 1 - animator.animatedFraction
-            wallpaperImage.alpha = 1 - animator.animatedFraction
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val blur = 1 + ((1 - animator.animatedFraction) * 79)
+                wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
+            }
             homeSection.alpha = animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 isDrawerOpen = false
@@ -165,9 +157,11 @@ class AppDrawer(
             newData.add(app)
         }
         newData.sortWith { info, info1 ->
-            if (info.isFresh == info1.isFresh)
-                 info.name[0].code - info1.name[0].code
-            else
+             if (info.isFresh == info1.isFresh) {
+                 if (info.isLastUsed) -1
+                 else if (info1.isLastUsed) 1
+                 else info.name[0].code - info1.name[0].code
+            } else
                 if (info.isFresh) -1 else 1
         }
         patternRecognizer.flushRemovedPackages()

@@ -38,7 +38,7 @@ class PinnedAppAdapter(
 
         holder.itemView.setOnClickListener {
             if (!isEditMode)
-                launchApp(app)
+                appContext.launchApp(app)
         }
         holder.itemView.setOnTouchListener(object : View.OnTouchListener {
             var downX = 0f
@@ -90,11 +90,5 @@ class PinnedAppAdapter(
             notifyDataSetChanged()
         }
         return isRemoved
-    }
-    private fun launchApp(app: AppInfo) {
-        val intent = Intent()
-            .setComponent(ComponentName(app.packageName, app.activityName))
-            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        appContext.startActivity(intent)
     }
 }
