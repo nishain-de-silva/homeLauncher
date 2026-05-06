@@ -1,5 +1,6 @@
 package com.ndds.homelauncher
 
+import android.animation.ValueAnimator
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -9,9 +10,9 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -20,19 +21,28 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
+import android.view.LayoutInflater
 import android.view.View
+import android.view.View.MeasureSpec
+import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
+import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import java.io.File
-import java.io.FileInputStream
 import kotlin.math.min
 import androidx.core.net.toUri
+import androidx.core.view.children
+import androidx.core.view.drawToBitmap
+import androidx.core.graphics.createBitmap
+import com.ndds.homelauncher.widgets.WallpaperImageView
 
 
 class MainActivity : AppCompatActivity() {
@@ -41,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
     var promptedStorageAccess = false
+    val sheetDialog: SheetDialog = SheetDialog(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,18 +68,35 @@ class MainActivity : AppCompatActivity() {
                         or WindowInsetsCompat.Type.displayCutout()
                         or WindowInsetsCompat.Type.ime()
             )
-            v.updatePadding(
-                left = v.paddingLeft,
-                top = bars.top,
-                right = v.paddingRight,
-                bottom = bars.bottom,
+            findViewById<View>(R.id.contrast_backdrop_top).let {
+                val contrastParams = it.layoutParams as FrameLayout.LayoutParams
+                contrastParams.height = bars.top
+                it.layoutParams = contrastParams
+            }
+            findViewById<View>(R.id.contrast_backdrop_bottom).let {
+                val contrastParams = it.layoutParams as FrameLayout.LayoutParams
+                contrastParams.height = bars.bottom
+                it.layoutParams = contrastParams
+            }
+            findViewById<View>(R.id.home_section).updatePadding(
+                top = bars.bottom,
+                bottom = bars.bottom
+            )
+            sheetDialog.adjustPadding(bars)
+            findViewById<View>(R.id.app_list).updatePadding(
+                top = bars.top
+            )
+            findViewById<View>(R.id.appDrawer).updatePadding(
+                bottom = bars.bottom
             )
             WindowInsetsCompat.CONSUMED
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                appDrawer.closeDrawer()
-                desktopSection.dismissEditStateIfNeeded()
+                if (sheetDialog.dismiss()) {
+                    appDrawer.closeDrawer()
+                    desktopSection.dismissEditStateIfNeeded()
+                }
             }
         })
         findViewById<View>(R.id.root).apply {

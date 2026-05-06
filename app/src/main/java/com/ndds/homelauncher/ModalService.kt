@@ -1,20 +1,33 @@
 package com.ndds.homelauncher
 
+import android.animation.ValueAnimator
 import android.app.role.RoleManager
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.MeasureSpec
 import android.view.ViewGroup
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.widget.ImageView
+import android.widget.ListView
 import android.widget.TextView
 import androidx.core.net.toUri
+import androidx.core.view.updatePadding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.ndds.homelauncher.widgets.ModalItem
+import com.ndds.homelauncher.widgets.WallpaperImageView
 
 
 class ModalService (val appContext: MainActivity){
@@ -25,10 +38,9 @@ class ModalService (val appContext: MainActivity){
 
     fun showAppDetail(app: AppInfo, isAppDrawer: Boolean) {
         val dialogView = LayoutInflater.from(appContext).inflate(R.layout.app_detail_dropdown, null)
-        val sheetDialog = BottomSheetDialog(appContext, R.style.normalTextView)
+        val sheetDialog = appContext.sheetDialog// BottomSheetDialog(appContext, R.style.normalTextView)
         sheetDialog.setContentView(dialogView)
         sheetDialog.show()
-
 
         dialogView.findViewById<TextView>(R.id.appName).text = app.name
         val flags = appContext.packageManager.getApplicationInfo(app.packageName, PackageManager.GET_META_DATA).flags
@@ -46,7 +58,9 @@ class ModalService (val appContext: MainActivity){
         }
         dialogView.findViewById<ModalItem>(R.id.appInfoBtn).setOnClickListener { v ->
             sheetDialog.dismiss()
-            appContext.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            appContext.startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .setData("package:${app.packageName}".toUri()))
         }
         dialogView.isNestedScrollingEnabled = true
@@ -65,32 +79,12 @@ class ModalService (val appContext: MainActivity){
                 }
             }
         }
-        val shortcutContainer = dialogView.findViewById<ViewGroup>(R.id.shortcut_container)
+        val shortcutContainer = dialogView.findViewById<ListView>(R.id.shortcut_container)
         if (isDefaultHomeLauncher()) {
-            val launcherApps = appContext.getSystemService(LauncherApps::class.java)
-            val shortcuts = getShortcuts(app.packageName)
+            val shortcuts = getShortcuts(app.packageName).filter { it.isEnabled }
             if (shortcuts.isEmpty())
                 dialogView.findViewById<View>(R.id.divider).visibility = View.GONE
-            shortcuts.forEach { shortcut ->
-                if (!shortcut.isEnabled) return@forEach
-                val row = ModalItem(appContext)
-                val iconDrawable = launcherApps.getShortcutIconDrawable(shortcut, 0)
-                if (iconDrawable != null)
-                    row.setIcon(iconDrawable)
-                row.setLabel(shortcut.shortLabel!!)
-                row.setOnClickListener { v ->
-                    sheetDialog.dismiss()
-                    appContext.getSystemService(LauncherApps::class.java)
-                        .startShortcut(
-                            app.packageName,
-                            shortcut.id,
-                            null,
-                            null,
-                            Process.myUserHandle()
-                        )
-                }
-                shortcutContainer.addView(row)
-            }
+            shortcutContainer.adapter = shortcutListAdapter(sheetDialog, app.packageName, appContext, shortcuts)
         }
     }
 
@@ -113,7 +107,7 @@ class ModalService (val appContext: MainActivity){
     )?.activityInfo?.packageName == appContext.packageName
     fun showSettings(settingsCallback: (setting: Setting) -> Unit) {
         val dialogView = LayoutInflater.from(appContext).inflate(R.layout.home_settings_modal, null)
-        val sheetDialog = BottomSheetDialog(appContext, R.style.normalTextView)
+        val sheetDialog = appContext.sheetDialog//BottomSheetDialog(appContext, R.style.normalTextView)
         sheetDialog.setContentView(dialogView)
         sheetDialog.show()
         dialogView.findViewById<TextView>(R.id.changeWallpaper).setOnClickListener {

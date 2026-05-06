@@ -69,7 +69,7 @@ class AppDrawer(
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = animator.animatedFraction
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val blur = 1 + (animator.animatedFraction * 79)
+                val blur = 1 + (animator.animatedFraction * 39)
                 wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
             }
             homeSection.alpha = 1 - animator.animatedFraction
@@ -118,7 +118,7 @@ class AppDrawer(
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = 1 - animator.animatedFraction
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val blur = 1 + ((1 - animator.animatedFraction) * 79)
+                val blur = 1 + ((1 - animator.animatedFraction) * 39)
                 wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
             }
             homeSection.alpha = animator.animatedFraction

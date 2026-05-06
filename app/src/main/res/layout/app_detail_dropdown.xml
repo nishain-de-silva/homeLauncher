@@ -4,7 +4,6 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:weightSum="5"
     android:padding="20dp">
     <TextView
         android:id="@+id/appName"
@@ -13,18 +12,14 @@
         android:text="app Name"
         android:layout_marginBottom="12dp"
         android:textSize="25sp" />
-    <ScrollView
+    <ListView
+        android:id="@+id/shortcut_container"
+        android:scrollbars="none"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:scrollbars="none"
-        android:layout_weight="1">
-    <LinearLayout
-        android:id="@+id/shortcut_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:layout_weight="1"
+        android:divider="@null"
         />
-    </ScrollView>
     <View
         android:id="@+id/divider"
         android:layout_marginVertical="12dp"

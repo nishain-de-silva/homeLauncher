@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/superRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageView
+    <com.ndds.homelauncher.widgets.WallpaperImageView
         android:id="@+id/wallpaper"
         android:background="@color/transparent_black"
         android:visibility="gone"
@@ -86,4 +87,18 @@
                  />
         </LinearLayout>
     </FrameLayout>
+    <View
+        android:id="@+id/contrast_backdrop_top"
+        android:layout_width="match_parent"
+        android:background="@drawable/contrast_backdrop_status_bar"
+        android:layout_height="0dp"
+        android:layout_gravity="top"
+        />
+    <View
+        android:id="@+id/contrast_backdrop_bottom"
+        android:layout_width="match_parent"
+        android:background="@drawable/contrast_backdrop_bottom_navigation"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        />
 </FrameLayout>
