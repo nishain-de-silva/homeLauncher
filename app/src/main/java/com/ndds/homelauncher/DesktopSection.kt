@@ -65,11 +65,13 @@ class DesktopSection(val appContext: MainActivity) {
             if (adapter.isEditMode) {
                 toggleEditState()
             } else
-                ModalService(appContext).showSettings({setting ->
+                ModalService(appContext).showSettings({ setting ->
                     if (setting == ModalService.Setting.WallpaperChange)
-                        pickMedia.launch( PickVisualMediaRequest.Builder()
-                            .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            .build())
+                        pickMedia.launch(
+                            PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                .build()
+                        )
                     else if (setting == ModalService.Setting.ActivateEditPinList) {
                         toggleEditState()
                     }
@@ -243,7 +245,7 @@ class DesktopSection(val appContext: MainActivity) {
 
     fun updateTimestamp() {
         appContext.findViewById<CustomTextView>(R.id.time).text = SimpleDateFormat("hh:mm", Locale.getDefault()).format(Date())
-        appContext.findViewById<CustomTextView>(R.id.date).text = SimpleDateFormat("EEE, MMM dd", Locale.getDefault()).format(Date())
+        appContext.findViewById<CustomTextView>(R.id.date).text = SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()).format(Date())
     }
     fun onResume() {
         updateTimestamp()

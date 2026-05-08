@@ -18,6 +18,7 @@ import android.widget.ImageView
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ndds.homelauncher.widgets.WallpaperImageView
 
 class AppDrawer(
     val appContext: MainActivity,
@@ -68,10 +69,11 @@ class AppDrawer(
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = animator.animatedFraction
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && wallpaperImage.hasWallpaper) {
                 val blur = 1 + (animator.animatedFraction * 39)
                 wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
-            }
+            } else
+                wallpaperImage.alpha = animator.animatedFraction
             homeSection.alpha = 1 - animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 homeSection.visibility = View.GONE
@@ -100,7 +102,7 @@ class AppDrawer(
         isDrawerOpen = false
         rootView.visibility = View.GONE
     }
-    fun getWallpaperWidget() = (containerView.parent as ViewGroup).findViewById<View>(R.id.wallpaper)
+    fun getWallpaperWidget() = (containerView.parent as ViewGroup).findViewById<WallpaperImageView>(R.id.wallpaper)
     fun closeDrawer() {
         if (!isDrawerOpen) return
         val valueAnimator = ValueAnimator.ofInt(0, containerView.findViewById<ViewGroup>(R.id.root).height)
@@ -117,15 +119,17 @@ class AppDrawer(
         valueAnimator.addUpdateListener { animator ->
             rootView.translationY = (animator.animatedValue as Int).toFloat()
             rootView.alpha = 1 - animator.animatedFraction
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && wallpaperImage.hasWallpaper) {
                 val blur = 1 + ((1 - animator.animatedFraction) * 39)
                 wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(blur,blur, Shader.TileMode.CLAMP))
-            }
+            } else
+                wallpaperImage.alpha = 1 - animator.animatedFraction
             homeSection.alpha = animator.animatedFraction
             if (animator.animatedFraction == 1f) {
                 isDrawerOpen = false
                 rootView.visibility = View.GONE
                 wallpaperImage.visibility = View.GONE
+                wallpaperImage.alpha = 1f
             }
         }
         homeSection.visibility = View.VISIBLE

@@ -9,8 +9,10 @@ class WallpaperImageView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ): androidx.appcompat.widget.AppCompatImageView(context, attrs, defStyleAttr) {
     var wallpaperBitmap: Bitmap? = null
+    var hasWallpaper = false
     override fun setImageBitmap(bm: Bitmap?) {
         wallpaperBitmap = bm
+        hasWallpaper = bm != null
         super.setImageBitmap(bm)
     }
 }

@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
     <com.ndds.homelauncher.widgets.WallpaperImageView
         android:id="@+id/wallpaper"
-        android:background="@color/transparent_black"
+        android:background="#96000000"
         android:visibility="gone"
         android:scaleType="centerCrop"
         android:layout_width="match_parent"

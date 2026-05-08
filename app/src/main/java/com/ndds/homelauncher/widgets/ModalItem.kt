@@ -30,7 +30,7 @@ class ModalItem(context: Context, attrs:AttributeSet? = null): LinearLayout(cont
         findViewById<TextView>(R.id.shortcutLabel).text = text
     }
 
-    fun setIcon(drawable: Drawable) {
+    fun setIcon(drawable: Drawable?) {
         findViewById<ImageView>(R.id.shortcutIcon).setImageDrawable(drawable)
     }
 }

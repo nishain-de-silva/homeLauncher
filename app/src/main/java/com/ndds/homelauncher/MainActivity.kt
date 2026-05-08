@@ -11,11 +11,13 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.provider.Settings
 import android.renderscript.Allocation
 import android.renderscript.Element
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var desktopSection: DesktopSection
     var promptedStorageAccess = false
     val sheetDialog: SheetDialog = SheetDialog(this)
+    lateinit var snackBar: SnackBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,10 +62,11 @@ class MainActivity : AppCompatActivity() {
 
         desktopSection = DesktopSection(this)
         appDrawer = AppDrawer(this, findViewById(R.id.root), desktopSection)
-
+        val rootView = findViewById<ViewGroup>(R.id.root)
+        snackBar = SnackBar(this, rootView)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { v, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars()
                         or WindowInsetsCompat.Type.displayCutout()
@@ -83,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                 bottom = bars.bottom
             )
             sheetDialog.adjustPadding(bars)
+            snackBar.topInset = bars.top.toFloat()
             findViewById<View>(R.id.app_list).updatePadding(
                 top = bars.top
             )
@@ -108,14 +113,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun configureWallpaper() {
-        val wallpaperImage = findViewById<ImageView>(R.id.wallpaper)
-        var bitmap: Bitmap
+        val wallpaperImage = findViewById<WallpaperImageView>(R.id.wallpaper)
+        var bitmap: Bitmap? = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val wallpaperManager = WallpaperManager.getInstance(this)
             if (Environment.isExternalStorageManager()) {
-                val file = WallpaperManager.getInstance(this)
-                    .getWallpaperFile(WallpaperManager.FLAG_SYSTEM)!!
-                bitmap = BitmapFactory.decodeFileDescriptor(file.fileDescriptor)
-                file.close()
+                val file =
+                    wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM)
+                if (file != null) {
+                    bitmap = BitmapFactory.decodeFileDescriptor(file.fileDescriptor)
+                    file.close()
+                }
                 if (promptedStorageAccess)
                     promptedStorageAccess = false
             } else {
@@ -196,6 +204,13 @@ class MainActivity : AppCompatActivity() {
                             queryIntent,
                             PackageManager.MATCH_ALL
                         )
+                        if (isFreshInstall) {
+                            val appDetail = packageManager.getApplicationInfo(appPackageName, 0)
+                            snackBar.show(
+                                "${appDetail.loadLabel(packageManager)} installed",
+                                appDetail.loadIcon(packageManager)
+                            )
+                        }
                         for (resolveInfo in resolveInfos) {
                             appDrawer.addApp(
                                 AppInfo(
