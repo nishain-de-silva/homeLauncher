@@ -15,19 +15,29 @@ import com.ndds.homelauncher.widgets.CustomTextView
 class GridAppAdapter(
     val appContext: MainActivity,
     var apps: ArrayList<AppInfo>,
-) : RecyclerView.Adapter<GridAppAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<GridAppAdapter.Item>() {
     private var searchText: String = ""
-    var filteredApps: List<AppInfo> = apps
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    var filteredApps: List<AppInfo?> = arrayListOf()
+    open class Item(val view: View) : RecyclerView.ViewHolder(view) {}
+    class ViewHolder(view: View) : Item(view) {
         val icon: ImageView = view.findViewById(R.id.icon)
         val name: CustomTextView = view.findViewById(R.id.name)
         val indicator: ImageView = view.findViewById(R.id.indicator)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.grid_item_app, parent, false)
-        return ViewHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Item {
+        if (viewType == 0) {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.grid_item_app, parent, false)
+            return ViewHolder(view)
+        } else {
+            val blankView = View(appContext)
+            blankView.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0
+            )
+            return Item(blankView)
+        }
     }
 
     fun applySearch(searchText: String) {
@@ -40,14 +50,24 @@ class GridAppAdapter(
         if (searchText.isEmpty())
             filteredApps = apps
         else {
-            filteredApps = apps.filter { original ->
-                original.name.split(" ").any { it.startsWith(searchText, true) }
+            val newData: ArrayList<AppInfo?> = arrayListOf()
+            apps.forEach { original ->
+                if (original.name.split(" ").any { it.startsWith(searchText, true) })
+                    newData.add(original)
             }
-            if (filteredApps.isEmpty())
-                filteredApps = apps.filter { original ->
-                    original.name.split(" ").any { it.contains(searchText, true) }
+            if (newData.isEmpty())
+                apps.forEach { original ->
+                    if (original.name.split(" ").any { it.contains(searchText, true) })
+                        newData.add(original)
                 }
-
+            if (newData.size % 4 != 0) {
+                val index = newData.size - (newData.size % 4)
+                val count = 4 - (newData.size % 4)
+                for (i in 0 until count) {
+                    newData.add(index, null)
+                }
+            }
+            filteredApps = newData
         }
         this.notifyDataSetChanged()
     }
@@ -55,10 +75,12 @@ class GridAppAdapter(
 
     override fun getItemCount() = filteredApps.size
 
-
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val app = filteredApps[position]
+    override fun getItemViewType(position: Int): Int {
+        return if (filteredApps[position] == null) 1 else 0
+    }
+    override fun onBindViewHolder(holder: Item, position: Int) {
+        val app = filteredApps[position] ?: return
+        holder as ViewHolder
         holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
         if (app.isFresh || app.isLastUsed) {
@@ -83,6 +105,6 @@ class GridAppAdapter(
 
     fun launchFirstApp() {
         if (filteredApps.isNotEmpty())
-            appContext.launchApp(filteredApps[0])
+            appContext.launchApp(filteredApps.first{ it != null }!!)
     }
 }

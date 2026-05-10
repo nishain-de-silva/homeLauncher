@@ -28,6 +28,7 @@
                 android:layout_marginBottom="15dp"
                 android:gravity="center_vertical">
                 <LinearLayout
+                    android:id="@+id/time_status"
                     android:paddingVertical="5dp"
                     android:paddingHorizontal="10dp"
                     android:layout_width="wrap_content"

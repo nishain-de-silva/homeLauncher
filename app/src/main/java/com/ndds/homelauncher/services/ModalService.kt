@@ -10,6 +10,8 @@ import android.os.Process
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.CalendarView
+import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
@@ -19,6 +21,7 @@ import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.adapters.ShortcutListAdapter
 import com.ndds.homelauncher.widgets.ModalItem
+import java.util.Date
 
 
 class ModalService (val appContext: MainActivity){
@@ -81,6 +84,17 @@ class ModalService (val appContext: MainActivity){
             shortcutContainer.adapter =
                 ShortcutListAdapter(sheetDialog, app.packageName, appContext, shortcuts)
         }
+    }
+
+    fun showCalender() {
+        val sheetDialog = appContext.sheetDialog
+        val calendarView = CalendarView(appContext)
+        calendarView.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        sheetDialog.setContentView(calendarView)
+        sheetDialog.show()
     }
 
     private fun getShortcuts(packageName: String): List<ShortcutInfo> {

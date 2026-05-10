@@ -158,6 +158,9 @@ class DesktopSection(val appContext: MainActivity) {
         rootView.findViewById<View>(R.id.action_edit_fav_list).setOnClickListener {
             toggleEditState()
         }
+        rootView.findViewById<View>(R.id.time_status).setOnClickListener {
+            ModalService(appContext).showCalender()
+        }
         rootView.findViewById<View>(R.id.swipe_overlay).setOnTouchListener(object: View.OnTouchListener {
             var downX = 0f
             var downY = 0f
@@ -296,7 +299,7 @@ class DesktopSection(val appContext: MainActivity) {
             network = connectivityManager.activeNetwork
         if (network != null) {
             networkCapabilities =
-                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+                connectivityManager.getNetworkCapabilities(network)
         }
 
         if (networkCapabilities != null) {
