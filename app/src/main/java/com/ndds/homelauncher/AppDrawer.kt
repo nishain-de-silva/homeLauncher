@@ -14,10 +14,10 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.ImageView
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ndds.homelauncher.adapters.GridAppAdapter
 import com.ndds.homelauncher.widgets.WallpaperImageView
 
 class AppDrawer(

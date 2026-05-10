@@ -14,7 +14,6 @@ import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -27,6 +26,9 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ndds.homelauncher.adapters.PinnedAppAdapter
+import com.ndds.homelauncher.services.ModalService
+import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.widgets.CustomTextView
 import java.text.SimpleDateFormat
 import java.util.Date

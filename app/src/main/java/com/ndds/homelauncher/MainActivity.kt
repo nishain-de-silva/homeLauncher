@@ -1,6 +1,5 @@
 package com.ndds.homelauncher
 
-import android.animation.ValueAnimator
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -10,30 +9,20 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
 import android.provider.Settings
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
-import android.view.LayoutInflater
 import android.view.View
-import android.view.View.MeasureSpec
 import android.view.ViewGroup
-import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -41,9 +30,8 @@ import androidx.core.view.updatePadding
 import java.io.File
 import kotlin.math.min
 import androidx.core.net.toUri
-import androidx.core.view.children
-import androidx.core.view.drawToBitmap
-import androidx.core.graphics.createBitmap
+import com.ndds.homelauncher.utils.SheetDialog
+import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
 
 

@@ -1,4 +1,4 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.adapters
 
 import android.content.Context
 import android.content.pm.LauncherApps
@@ -7,6 +7,7 @@ import android.os.Process
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import com.ndds.homelauncher.utils.SheetDialog
 import com.ndds.homelauncher.widgets.ModalItem
 
 class ShortcutListAdapter(val sheetDialog: SheetDialog,

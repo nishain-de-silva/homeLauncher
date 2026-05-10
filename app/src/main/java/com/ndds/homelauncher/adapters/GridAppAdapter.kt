@@ -1,14 +1,15 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.adapters
 
-import android.content.ComponentName
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
+import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.MainActivity
+import com.ndds.homelauncher.R
+import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.widgets.CustomTextView
 
 class GridAppAdapter(

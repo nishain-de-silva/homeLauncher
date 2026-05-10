@@ -1,8 +1,7 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.utils
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.Rect
 
 class TextLayout(val paint: Paint, text: String, availableWidth: Int) {
     private var lineSpace = 0f

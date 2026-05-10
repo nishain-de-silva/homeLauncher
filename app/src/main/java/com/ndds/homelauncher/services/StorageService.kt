@@ -1,8 +1,9 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.services
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import androidx.core.content.edit
+import com.ndds.homelauncher.AppInfo
 
 class StorageService(context: Context) {
     private val sharedPreferences = context.getSharedPreferences("default", MODE_PRIVATE)

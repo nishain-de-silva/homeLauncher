@@ -1,4 +1,4 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.utils
 
 import android.animation.ValueAnimator
 import android.view.LayoutInflater
@@ -10,6 +10,8 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import androidx.core.graphics.Insets
 import androidx.core.view.updatePadding
+import com.ndds.homelauncher.MainActivity
+import com.ndds.homelauncher.R
 
 class SheetDialog(val appContext: MainActivity) {
     var modalView: View? = null
@@ -21,8 +23,8 @@ class SheetDialog(val appContext: MainActivity) {
         modalContainer.addView(content)
         modalContainer.updatePadding(bottom = appContext.findViewById<View>(R.id.home_section).paddingBottom)
         modalContainer.measure(
-            View.MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-            View.MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
         val containerHeight = modalContainer.measuredHeight
         modalContainer.translationY = containerHeight.toFloat()

@@ -5,17 +5,14 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.text.Layout
-import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.setPadding
 import com.ndds.homelauncher.R
-import com.ndds.homelauncher.TextLayout
+import com.ndds.homelauncher.utils.TextLayout
 
 class CustomTextView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0

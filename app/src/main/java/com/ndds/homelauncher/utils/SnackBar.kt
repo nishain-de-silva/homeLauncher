@@ -1,4 +1,4 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.utils
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -12,6 +12,7 @@ import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.TextView
+import com.ndds.homelauncher.R
 
 class SnackBar(val context: Context, val rootView: ViewGroup) {
     var isShowing = false
@@ -30,7 +31,8 @@ class SnackBar(val context: Context, val rootView: ViewGroup) {
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         )
 
-        val valueAnimator = ValueAnimator.ofFloat(-snackBarView.measuredHeight.toFloat(), topInset + context.resources.getDimension(R.dimen.snackBar_top_margin))
+        val valueAnimator = ValueAnimator.ofFloat(-snackBarView.measuredHeight.toFloat(), topInset + context.resources.getDimension(
+            R.dimen.snackBar_top_margin))
         valueAnimator.duration = 500
         valueAnimator.interpolator = DecelerateInterpolator()
         valueAnimator.addUpdateListener { animator ->

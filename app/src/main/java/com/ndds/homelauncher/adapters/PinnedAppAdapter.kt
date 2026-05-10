@@ -1,22 +1,17 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.adapters
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
-import android.content.Intent
-import android.graphics.BlendMode
-import android.graphics.Color
-import android.graphics.PorterDuff
-import android.graphics.drawable.AdaptiveIconDrawable
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.ndds.homelauncher.GridAppAdapter.ViewHolder
+import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.MainActivity
+import com.ndds.homelauncher.R
+import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.widgets.CustomTextView
 
 class PinnedAppAdapter(

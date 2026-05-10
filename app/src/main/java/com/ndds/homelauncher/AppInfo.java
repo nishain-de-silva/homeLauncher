@@ -3,14 +3,14 @@ package com.ndds.homelauncher;
 import android.graphics.drawable.Drawable;
 
  public class AppInfo {
-     String name;
-     String packageName;
-     String id;
-     String activityName;
-     Drawable icon;
-     boolean isPinned;
-     boolean isLastUsed;
-     boolean isFresh;
+     public String name;
+     public String packageName;
+     public String id;
+     public String activityName;
+     public Drawable icon;
+     public boolean isPinned;
+     public boolean isLastUsed;
+     public boolean isFresh;
 
      public AppInfo(String name, String packageName, String activityName, Drawable icon) {
          this.id = name + packageName;

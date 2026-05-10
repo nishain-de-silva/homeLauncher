@@ -1,4 +1,4 @@
-package com.ndds.homelauncher
+package com.ndds.homelauncher.services
 
 import android.app.role.RoleManager
 import android.content.Intent
@@ -14,6 +14,10 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.net.toUri
+import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.MainActivity
+import com.ndds.homelauncher.R
+import com.ndds.homelauncher.adapters.ShortcutListAdapter
 import com.ndds.homelauncher.widgets.ModalItem
 
 
@@ -74,7 +78,8 @@ class ModalService (val appContext: MainActivity){
             val shortcuts = getShortcuts(app.packageName).filter { it.isEnabled }
             if (shortcuts.isEmpty())
                 dialogView.findViewById<View>(R.id.divider).visibility = View.GONE
-            shortcutContainer.adapter = ShortcutListAdapter(sheetDialog, app.packageName, appContext, shortcuts)
+            shortcutContainer.adapter =
+                ShortcutListAdapter(sheetDialog, app.packageName, appContext, shortcuts)
         }
     }
 
