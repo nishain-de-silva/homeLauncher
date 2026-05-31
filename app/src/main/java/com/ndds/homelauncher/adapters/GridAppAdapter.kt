@@ -15,28 +15,34 @@ import com.ndds.homelauncher.widgets.CustomTextView
 class GridAppAdapter(
     val appContext: MainActivity,
     var apps: ArrayList<AppInfo>,
-) : RecyclerView.Adapter<GridAppAdapter.Item>() {
+) : RecyclerView.Adapter<GridAppAdapter.ViewHolder>() {
     private var searchText: String = ""
     var filteredApps: List<AppInfo?> = arrayListOf()
-    open class Item(val view: View) : RecyclerView.ViewHolder(view) {}
-    class ViewHolder(view: View) : Item(view) {
-        val icon: ImageView = view.findViewById(R.id.icon)
-        val name: CustomTextView = view.findViewById(R.id.name)
-        val indicator: ImageView = view.findViewById(R.id.indicator)
+    class ViewHolder(view: View, itemType: Int) :  RecyclerView.ViewHolder(view) {
+        lateinit var icon: ImageView
+        lateinit var name: CustomTextView
+        lateinit var indicator: ImageView
+        init {
+            if (itemType == 0) {
+                icon = view.findViewById(R.id.icon)
+                name = view.findViewById(R.id.name)
+                indicator = view.findViewById(R.id.indicator)
+            }
+        }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Item {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (viewType == 0) {
             val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.grid_item_app, parent, false)
-            return ViewHolder(view)
+            return ViewHolder(view,0)
         } else {
             val blankView = View(appContext)
             blankView.layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0
             )
-            return Item(blankView)
+            return ViewHolder(blankView,1)
         }
     }
 
@@ -78,9 +84,8 @@ class GridAppAdapter(
     override fun getItemViewType(position: Int): Int {
         return if (filteredApps[position] == null) 1 else 0
     }
-    override fun onBindViewHolder(holder: Item, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val app = filteredApps[position] ?: return
-        holder as ViewHolder
         holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
         if (app.isFresh || app.isLastUsed) {
@@ -98,7 +103,7 @@ class GridAppAdapter(
             appContext.launchApp(app)
         }
         holder.itemView.setOnLongClickListener {
-            ModalService(appContext).showAppDetail(app, true)
+            appContext.modal.showAppDetail(app, true)
             return@setOnLongClickListener true
         }
     }

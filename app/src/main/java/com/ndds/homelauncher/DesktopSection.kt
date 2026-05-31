@@ -11,6 +11,7 @@ import android.hardware.camera2.CameraManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -23,6 +24,7 @@ import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +32,7 @@ import com.ndds.homelauncher.adapters.PinnedAppAdapter
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.widgets.CustomTextView
+import com.ndds.homelauncher.widgets.WidgetSlider
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,6 +42,8 @@ class DesktopSection(val appContext: MainActivity) {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     var rootView: ViewGroup = appContext.findViewById(R.id.home_section)
     var adapter: PinnedAppAdapter
+    var isEditMode = false
+    var widgetSlider: WidgetSlider
     var pinnedAppList: ArrayList<String>
     var isFlashLightOn = false
     fun initiateWallpaperControls() {
@@ -62,12 +67,11 @@ class DesktopSection(val appContext: MainActivity) {
                 Log.d("PhotoPicker", "No media selected")
             }
         })
-
-        rootView.setOnClickListener({
-            if (adapter.isEditMode) {
+        val backgroundOnClickListener = View.OnClickListener {
+            if (isEditMode) {
                 toggleEditState()
             } else
-                ModalService(appContext).showSettings({ setting ->
+                appContext.modal.showSettings({ setting ->
                     if (setting == ModalService.Setting.WallpaperChange)
                         pickMedia.launch(
                             PickVisualMediaRequest.Builder()
@@ -76,9 +80,13 @@ class DesktopSection(val appContext: MainActivity) {
                         )
                     else if (setting == ModalService.Setting.ActivateEditPinList) {
                         toggleEditState()
+                    } else if (setting == ModalService.Setting.AddWidget) {
+                        widgetSlider.promptToAddWidget()
                     }
                 })
-        })
+        }
+        rootView.findViewById<View>(R.id.default_widget_container).setOnClickListener(backgroundOnClickListener)
+        rootView.setOnClickListener(backgroundOnClickListener)
     }
 
     fun addApp(app: AppInfo) {
@@ -103,31 +111,33 @@ class DesktopSection(val appContext: MainActivity) {
         }
     }
     fun dismissEditStateIfNeeded() {
-        if (adapter.isEditMode)
+        if (isEditMode)
             toggleEditState()
     }
     fun toggleEditState() {
         val v = rootView.findViewById<ImageView>(R.id.action_edit_fav_list)
-        if (adapter.isEditMode) {
+        if (isEditMode) {
             v.setImageDrawable(AppCompatResources.getDrawable(appContext, R.drawable.edit))
             pinnedAppList = ArrayList(adapter.appList.map { it.id })
             StorageService(appContext).updatePinnedApps(adapter.appList)
         } else
             v.setImageDrawable(AppCompatResources.getDrawable(appContext, R.drawable.check))
-        adapter.isEditMode = !adapter.isEditMode
+        isEditMode = !isEditMode
     }
 
      init {
          initiateWallpaperControls()
         pinnedAppList = StorageService(appContext).getPinnedApps()
         val appListView = rootView.findViewById<RecyclerView>(R.id.fav_app_list)
+         widgetSlider = rootView.findViewById(R.id.widget_slider)
+         widgetSlider.load(appContext)
         val itemTouchHelper = ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun isLongPressDragEnabled(): Boolean {
                 return false
             }
 
             override fun isItemViewSwipeEnabled(): Boolean {
-                return adapter.isEditMode
+                return isEditMode
             }
 
             override fun onMove(
@@ -152,14 +162,14 @@ class DesktopSection(val appContext: MainActivity) {
             }
         })
 
-        adapter = PinnedAppAdapter(appContext, arrayListOf(), itemTouchHelper)
+        adapter = PinnedAppAdapter(appContext, this,arrayListOf(), itemTouchHelper)
         appListView.layoutManager = LinearLayoutManager(appContext)
         appListView.adapter = adapter
         rootView.findViewById<View>(R.id.action_edit_fav_list).setOnClickListener {
             toggleEditState()
         }
         rootView.findViewById<View>(R.id.time_status).setOnClickListener {
-            ModalService(appContext).showCalender()
+            appContext.modal.showCalender()
         }
         rootView.findViewById<View>(R.id.swipe_overlay).setOnTouchListener(object: View.OnTouchListener {
             var downX = 0f
@@ -172,7 +182,7 @@ class DesktopSection(val appContext: MainActivity) {
                     downX = motionEvent.x
                     downY = motionEvent.y
                 } else if (motionEvent.action == MotionEvent.ACTION_UP) {
-                    if (adapter.isEditMode) {
+                    if (isEditMode) {
                         toggleEditState()
                         return true
                     }
@@ -317,5 +327,11 @@ class DesktopSection(val appContext: MainActivity) {
                 connectionStatus = "Unknown connection"
         }
         rootView.findViewById<CustomTextView>(R.id.connection_status).text = connectionStatus
+    }
+
+    fun updateBatteryLevel(intent: Intent) {
+        val percentage = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 1) * 100 /
+                intent.getIntExtra(BatteryManager.EXTRA_SCALE, 1)
+        rootView.findViewById<CustomTextView>(R.id.battery_level).text = "$percentage%"
     }
 }

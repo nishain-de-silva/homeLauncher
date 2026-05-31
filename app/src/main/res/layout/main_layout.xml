@@ -17,75 +17,93 @@
         <LinearLayout
             android:id="@+id/home_section"
             android:orientation="vertical"
-            android:gravity="bottom"
-            android:paddingHorizontal="35dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <LinearLayout
+            <com.ndds.homelauncher.widgets.WidgetSlider
+                android:id="@+id/widget_slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="15dp"
-                android:gravity="center_vertical">
+                android:clickable="true"
+                android:layout_marginBottom="15dp">
                 <LinearLayout
-                    android:id="@+id/time_status"
-                    android:paddingVertical="5dp"
-                    android:paddingHorizontal="10dp"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/default_widget_container"
+                    android:paddingTop="100dp"
+                    android:paddingHorizontal="35dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/transparent_black_box">
-                    <com.ndds.homelauncher.widgets.CustomTextView
-                        android:id="@+id/time"
-                        android:textColor="@android:color/white"
-                        android:text="hello world"
-                        android:textSize="50sp"
+                    android:gravity="center_vertical">
+                    <LinearLayout
+                        android:id="@+id/time_status"
+                        android:paddingVertical="5dp"
+                        android:paddingHorizontal="10dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        />
-                    <com.ndds.homelauncher.widgets.CustomTextView
-                        android:id="@+id/date"
-                        android:textColor="@android:color/white"
-                        android:text="date"
-                        android:textSize="20sp"
-                        android:layout_marginVertical="5dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        />
-                    <com.ndds.homelauncher.widgets.CustomTextView
-                        android:id="@+id/connection_status"
-                        android:text="connection status"
-                        android:textSize="15sp"
-                        android:textColor="@android:color/white"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/transparent_black_box">
+                        <com.ndds.homelauncher.widgets.CustomTextView
+                            android:id="@+id/time"
+                            android:textColor="@android:color/white"
+                            android:text="hello world"
+                            android:textSize="50sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            />
+                        <com.ndds.homelauncher.widgets.CustomTextView
+                            android:id="@+id/date"
+                            android:textColor="@android:color/white"
+                            android:text="date"
+                            android:textSize="20sp"
+                            android:layout_marginVertical="5dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            />
+                        <com.ndds.homelauncher.widgets.CustomTextView
+                            android:id="@+id/connection_status"
+                            android:text="connection status"
+                            android:textSize="15sp"
+                            android:textColor="@android:color/white"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            />
+                        <com.ndds.homelauncher.widgets.CustomTextView
+                            android:id="@+id/battery_level"
+                            android:text="100%"
+                            android:textSize="15sp"
+                            android:textColor="@android:color/white"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            />
+                    </LinearLayout>
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+                    <ImageView
+                        android:id="@+id/action_edit_fav_list"
+                        android:layout_width="37dp"
+                        android:layout_height="37dp"
+                        android:padding="7dp"
+                        android:src="@drawable/edit"
+                        android:background="@drawable/back_transparent_circle"
                         />
                 </LinearLayout>
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-                <ImageView
-                    android:id="@+id/action_edit_fav_list"
-                    android:layout_width="37dp"
-                    android:layout_height="37dp"
-                    android:padding="7dp"
-                    android:src="@drawable/edit"
-                    android:background="@drawable/back_transparent_circle"
-                    />
-            </LinearLayout>
+            </com.ndds.homelauncher.widgets.WidgetSlider>
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/fav_app_list"
+                android:layout_gravity="bottom"
+                android:paddingHorizontal="35dp"
                 android:divider="@null"
                 android:scrollbars="none"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 />
             <View
                 android:id="@+id/swipe_overlay"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
-                 />
+                android:layout_height="0dp"
+                android:minHeight="100dp"
+                android:layout_weight="1"
+                />
         </LinearLayout>
     </FrameLayout>
     <View

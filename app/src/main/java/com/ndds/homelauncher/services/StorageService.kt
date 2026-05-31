@@ -12,6 +12,29 @@ class StorageService(context: Context) {
         if (jsonAppArray!!.isEmpty()) return arrayListOf()
         return ArrayList(jsonAppArray.split("|"))
     }
+    fun getWidgetList(): ArrayList<Int> {
+        val stringList = sharedPreferences.getString("widgetList", "")!!
+        if (stringList.isEmpty()) return arrayListOf()
+        return ArrayList(stringList.split(",").map { it.toInt() })
+    }
+    fun updateWidgetList(newData: List<Int>) {
+        sharedPreferences.edit {
+            putString("widgetList",newData.joinToString(separator = ",", transform = { it.toString() } ))
+        }
+    }
+    fun getWidgetID(): Int {
+        return sharedPreferences.getInt("widgetID", -1)
+    }
+    fun saveWidgetID(id: Int) {
+        return sharedPreferences.edit{
+            putInt("widgetID",id)
+        }
+    }
+    fun removeWidgetID() {
+        return sharedPreferences.edit {
+            remove("widgetID")
+        }
+    }
     fun updatePinnedApps(updatedList: List<AppInfo>) {
         sharedPreferences.edit {
             putString("appList", updatedList.map { it.id }.joinToString("|"))

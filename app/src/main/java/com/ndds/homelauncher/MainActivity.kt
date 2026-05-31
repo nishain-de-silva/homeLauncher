@@ -1,5 +1,6 @@
 package com.ndds.homelauncher
 
+import android.Manifest
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -21,6 +22,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -30,18 +33,22 @@ import androidx.core.view.updatePadding
 import java.io.File
 import kotlin.math.min
 import androidx.core.net.toUri
+import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.utils.SheetDialog
 import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var requestPermission: ActivityResultLauncher<String>
     private var appInstallationListener: BroadcastReceiver? = null
+    private var systemEventListener: BroadcastReceiver? = null
     lateinit var appDrawer: AppDrawer
     var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
     var promptedStorageAccess = false
     val sheetDialog: SheetDialog = SheetDialog(this)
+    lateinit var modal: ModalService
     lateinit var snackBar: SnackBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +59,7 @@ class MainActivity : AppCompatActivity() {
         appDrawer = AppDrawer(this, findViewById(R.id.root), desktopSection)
         val rootView = findViewById<ViewGroup>(R.id.root)
         snackBar = SnackBar(this, rootView)
+        modal = ModalService(this)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { v, insets ->
@@ -97,6 +105,10 @@ class MainActivity : AppCompatActivity() {
                 WallpaperManager.getInstance(this@MainActivity).setWallpaperOffsets(windowToken, 0.5f, 0.5f)
             }
         }
+        requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission(), { permissionGranted ->
+            if (permissionGranted)
+                configureWallpaper()
+        })
         configureWallpaper()
     }
 
@@ -106,6 +118,14 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wallpaperManager = WallpaperManager.getInstance(this)
             if (Environment.isExternalStorageManager()) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermission.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                    return
+                }
                 val file =
                     wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM)
                 if (file != null) {
@@ -167,20 +187,36 @@ class MainActivity : AppCompatActivity() {
     private fun registerInstallationReceiver() {
         if (appInstallationListener != null) {
             unregisterReceiver(appInstallationListener)
+            unregisterReceiver(systemEventListener)
         }
 
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED)
-        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED)
-        intentFilter.addAction(Intent.ACTION_TIME_TICK)
-        intentFilter.addDataScheme("package")
-        appInstallationListener = object : BroadcastReceiver() {
-            override fun onReceive(p1: Context?, intent: Intent?) {
+        val packageChangeFilter = IntentFilter()
+        val systemEventFilter = IntentFilter()
+
+        packageChangeFilter.addAction(Intent.ACTION_PACKAGE_ADDED)
+        packageChangeFilter.addAction(Intent.ACTION_PACKAGE_REMOVED)
+        packageChangeFilter.addDataScheme("package")
+
+        systemEventFilter.addAction(Intent.ACTION_BATTERY_CHANGED)
+        systemEventFilter.addAction(Intent.ACTION_TIME_TICK)
+        systemEventListener = object : BroadcastReceiver() {
+            override fun onReceive(p0: Context?, intent: Intent?) {
                 if (intent == null) return
+                if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
+                    desktopSection.updateBatteryLevel(intent)
+                    return
+                }
                 if (intent.action == Intent.ACTION_TIME_TICK) {
                     desktopSection.updateTimestamp()
                     return
                 }
+            }
+        }
+
+        appInstallationListener = object : BroadcastReceiver() {
+            override fun onReceive(p1: Context?, intent: Intent?) {
+                if (intent == null) return
+
                 val appPackageName = intent.data?.encodedSchemeSpecificPart ?: return
                 if (intent.action == Intent.ACTION_PACKAGE_ADDED) {
                     val isFreshInstall = !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
@@ -221,9 +257,17 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.registerReceiver(
             this,
             appInstallationListener,
-            intentFilter,
+            packageChangeFilter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
+        val dataIntent = ContextCompat.registerReceiver(
+            this,
+            systemEventListener,
+            systemEventFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        if (dataIntent != null)
+            desktopSection.updateBatteryLevel(dataIntent)
     }
 
     fun launchApp(app: AppInfo) {
@@ -239,10 +283,6 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (promptedStorageAccess) {
             configureWallpaper()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                Environment.isExternalStorageManager()) {
-
-            }
         }
         registerInstallationReceiver()
         desktopSection.onResume()
@@ -252,8 +292,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        desktopSection.dismissEditStateIfNeeded()
-        appDrawer.closeDrawer()
+        if (sheetDialog.dismiss()) {
+            appDrawer.closeDrawer()
+            desktopSection.dismissEditStateIfNeeded()
+        }
     }
 
 
@@ -261,7 +303,9 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         if (appInstallationListener != null) {
             unregisterReceiver(appInstallationListener)
+            unregisterReceiver(systemEventListener)
             appInstallationListener = null
+            systemEventListener = null
         }
         desktopSection.onPause()
     }
@@ -270,7 +314,9 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         if (appInstallationListener != null) {
             unregisterReceiver(appInstallationListener)
+            unregisterReceiver(systemEventListener)
             appInstallationListener = null
+            systemEventListener = null
         }
         appDrawer.closeDrawerImmediately()
     }

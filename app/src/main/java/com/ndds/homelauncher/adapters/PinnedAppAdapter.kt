@@ -9,17 +9,19 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.DesktopSection
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.widgets.CustomTextView
+import kotlin.math.abs
 
 class PinnedAppAdapter(
     val appContext: MainActivity,
+    val desktop: DesktopSection,
     var appList: ArrayList<AppInfo>,
     val itemTouchHelper: ItemTouchHelper
 ): RecyclerView.Adapter<PinnedAppAdapter.Item>() {
-    var isEditMode = false
     class Item(view: View): RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.icon)
         val name: CustomTextView = view.findViewById(R.id.name)
@@ -32,28 +34,37 @@ class PinnedAppAdapter(
         holder.name.text = app.name
 
         holder.itemView.setOnClickListener {
-            if (!isEditMode)
+            if (!desktop.isEditMode)
                 appContext.launchApp(app)
         }
         holder.itemView.setOnTouchListener(object : View.OnTouchListener {
             var downX = 0f
             var downY = 0f
+            var hasDragStarted = false;
             override fun onTouch(
-                view: View?,
-                event: MotionEvent?
+                view: View,
+                event: MotionEvent
             ): Boolean {
-                if (event?.action == MotionEvent.ACTION_DOWN) {
+                if (event.action == MotionEvent.ACTION_DOWN) {
                     downX = event.x
                     downY = event.y
-                } else if (event?.action == MotionEvent.ACTION_MOVE) {
-                    if (isEditMode && Math.abs(downY - event.y) > Math.abs(downX - event.x))
-                        itemTouchHelper.startDrag(holder)
+                    hasDragStarted = false
+                    return false
+                } else if (event.action == MotionEvent.ACTION_MOVE) {
+                    if (abs(downY - event.y) < 10 && Math.abs(downX - event.x) < 10)
+                        return false
+                    if (Math.abs(downY - event.y) > Math.abs(downX - event.x)) {
+                        if (desktop.isEditMode && !hasDragStarted) {
+                            hasDragStarted = true
+                            itemTouchHelper.startDrag(holder)
+                        }
+                    }
                 }
                 return false
             }
         })
         holder.itemView.setOnLongClickListener {
-            if (isEditMode) return@setOnLongClickListener false
+            if (desktop.isEditMode) return@setOnLongClickListener false
             ModalService(appContext).showAppDetail(app, false)
             return@setOnLongClickListener true
         }

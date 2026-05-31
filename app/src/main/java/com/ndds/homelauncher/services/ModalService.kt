@@ -1,6 +1,8 @@
 package com.ndds.homelauncher.services
 
 import android.app.role.RoleManager
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
@@ -10,6 +12,7 @@ import android.os.Process
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.CalendarView
 import android.widget.LinearLayout
 import android.widget.ListView
@@ -20,24 +23,32 @@ import com.ndds.homelauncher.AppInfo
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.adapters.ShortcutListAdapter
+import com.ndds.homelauncher.adapters.WidgetPreviewAdapter
 import com.ndds.homelauncher.widgets.ModalItem
-import java.util.Date
 
 
-class ModalService (val appContext: MainActivity){
+class ModalService(val appContext: MainActivity) {
+
     enum class Setting {
         WallpaperChange,
-        ActivateEditPinList
+        ActivateEditPinList,
+        AddWidget
     }
+
+
 
     fun showAppDetail(app: AppInfo, isAppDrawer: Boolean) {
         val dialogView = LayoutInflater.from(appContext).inflate(R.layout.app_detail_dropdown, null)
-        val sheetDialog = appContext.sheetDialog// BottomSheetDialog(appContext, R.style.normalTextView)
+        val sheetDialog =
+            appContext.sheetDialog// BottomSheetDialog(appContext, R.style.normalTextView)
         sheetDialog.setContentView(dialogView)
         sheetDialog.show()
 
         dialogView.findViewById<TextView>(R.id.appName).text = app.name
-        val flags = appContext.packageManager.getApplicationInfo(app.packageName, PackageManager.GET_META_DATA).flags
+        val flags = appContext.packageManager.getApplicationInfo(
+            app.packageName,
+            PackageManager.GET_META_DATA
+        ).flags
         val uninstallButton = dialogView.findViewById<ModalItem>(R.id.uninstallAppBtn)
         if (flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
             uninstallButton.setLabel("Cannot uninstall System app")
@@ -56,7 +67,8 @@ class ModalService (val appContext: MainActivity){
             appContext.startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .setData("package:${app.packageName}".toUri()))
+                    .setData("package:${app.packageName}".toUri())
+            )
         }
         dialogView.findViewById<ModalItem>(R.id.pinOrUnpinAppBtn).let {
             val canPinApp = isAppDrawer && !app.isPinned
@@ -97,26 +109,45 @@ class ModalService (val appContext: MainActivity){
         sheetDialog.show()
     }
 
+    fun showWidgetList(onWidgetSelected: (AppWidgetProviderInfo) -> Unit) {
+        val sheetDialog = appContext.sheetDialog
+        val appWidgetManager = AppWidgetManager.getInstance(appContext)
+        val initialView = LayoutInflater.from(appContext).inflate(R.layout.no_widget, null) as ViewGroup
+        initialView.findViewById<ListView>(R.id.widget_list).adapter = WidgetPreviewAdapter(appContext,
+            { selectedWidgetInfo ->
+                sheetDialog.dismissListener = {
+                    onWidgetSelected(selectedWidgetInfo)
+                }
+                sheetDialog.dismiss()
+            },
+            appWidgetManager.installedProviders
+        );
+        sheetDialog.setContentView(initialView)
+        sheetDialog.show()
+    }
     private fun getShortcuts(packageName: String): List<ShortcutInfo> {
         val launcherApps = appContext.getSystemService(LauncherApps::class.java)
 
         val query = LauncherApps.ShortcutQuery().apply {
             setPackage(packageName)
             setQueryFlags(
-                        LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
                         LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
                         LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED
             )
         }
         return launcherApps.getShortcuts(query, Process.myUserHandle()) ?: emptyList()
     }
+
     fun isDefaultHomeLauncher() = appContext.packageManager.resolveActivity(
         Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
         PackageManager.MATCH_DEFAULT_ONLY
     )?.activityInfo?.packageName == appContext.packageName
+
     fun showSettings(settingsCallback: (setting: Setting) -> Unit) {
         val dialogView = LayoutInflater.from(appContext).inflate(R.layout.home_settings_modal, null)
-        val sheetDialog = appContext.sheetDialog//BottomSheetDialog(appContext, R.style.normalTextView)
+        val sheetDialog =
+            appContext.sheetDialog//BottomSheetDialog(appContext, R.style.normalTextView)
         sheetDialog.setContentView(dialogView)
         sheetDialog.show()
         dialogView.findViewById<TextView>(R.id.changeWallpaper).setOnClickListener {
@@ -126,6 +157,9 @@ class ModalService (val appContext: MainActivity){
         dialogView.findViewById<TextView>(R.id.editFavList).setOnClickListener {
             settingsCallback(Setting.ActivateEditPinList)
             sheetDialog.dismiss()
+        }
+        dialogView.findViewById<TextView>(R.id.add_widget).setOnClickListener {
+            settingsCallback(Setting.AddWidget)
         }
         dialogView.findViewById<TextView>(R.id.defaultLauncherSetup).let {
             if (isDefaultHomeLauncher())
