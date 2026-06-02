@@ -16,7 +16,6 @@ import androidx.core.view.isGone
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.ndds.homelauncher.adapters.HomeWidgetListAdapter
 import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.utils.RecyclerViewOnTouchListener
 import com.ndds.homelauncher.widgets.ModalItem

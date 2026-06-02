@@ -28,7 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
-import com.ndds.homelauncher.adapters.HomeWidgetListAdapter
 import com.ndds.homelauncher.adapters.ReArrangeWidgetAdapter
 import com.ndds.homelauncher.services.StorageService
 import kotlin.math.abs
@@ -41,7 +40,6 @@ class WidgetSlider @JvmOverloads constructor(
     lateinit var widgetIDs: ArrayList<Int>
     lateinit var initialView: View
     val APPWIDGET_HOST_ID = 1024
-    lateinit var adapter: HomeWidgetListAdapter
     lateinit var appWidgetManager: AppWidgetManager
 
     private lateinit var requestWidgetBindFlow: ActivityResultLauncher<Intent>

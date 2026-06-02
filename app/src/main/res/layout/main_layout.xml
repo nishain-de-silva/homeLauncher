@@ -90,19 +90,18 @@
             </com.ndds.homelauncher.widgets.WidgetSlider>
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/fav_app_list"
-                android:layout_gravity="bottom"
                 android:paddingHorizontal="35dp"
                 android:divider="@null"
                 android:scrollbars="none"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 />
             <View
                 android:id="@+id/swipe_overlay"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:minHeight="100dp"
                 android:layout_weight="1"
+                android:minHeight="100dp"
                 />
         </LinearLayout>
     </FrameLayout>

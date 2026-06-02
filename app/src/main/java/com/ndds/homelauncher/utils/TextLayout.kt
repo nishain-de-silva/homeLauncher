@@ -9,14 +9,39 @@ class TextLayout(val paint: Paint, text: String, availableWidth: Int) {
     private val lines = ArrayList<Node>()
     private var maxWidth: Float
     private class Node(var text: String, var lineWidth: Float)
+    private fun splitWord(inputText: String): List<String> {
+        val words = ArrayList<String>()
+        var text = ""
+        for(i in 0 until inputText.length) {
+            val c = inputText[i]
+            if (i > 0 && c in 'A'..'Z') {
+                words.add(text)
+                text = c.toString()
+            } else {
+                text += c
+            }
+        }
+        words.add(text)
+        return words
+    }
     init {
         fontHeight = -paint.fontMetrics.ascent + paint.fontMetrics.descent
         lineSpace = paint.fontMetrics.descent
         val words = text.split(" ")
         var textWidth = paint.measureText(words[0])
         var node = Node(words[0], textWidth)
-        maxWidth = textWidth
-        lines.add(node)
+        maxWidth = -1f
+        if (textWidth > availableWidth) {
+            splitWord(words[0]).forEach {
+                val wordWidth = paint.measureText(it)
+                if (wordWidth > maxWidth)
+                    maxWidth = wordWidth
+                lines.add(Node(it, wordWidth))
+            }
+        } else {
+            maxWidth = textWidth
+            lines.add(node)
+        }
         for (i in 1 until words.size) {
             val word = words[i]
             val concatenatedText = node.text + " " + word
