@@ -123,6 +123,7 @@ class DesktopSection(val appContext: MainActivity) {
         } else
             v.setImageDrawable(AppCompatResources.getDrawable(appContext, R.drawable.check))
         isEditMode = !isEditMode
+        adapter.notifyDataSetChanged()
     }
 
      init {
@@ -171,7 +172,7 @@ class DesktopSection(val appContext: MainActivity) {
         rootView.findViewById<View>(R.id.time_status).setOnClickListener {
             appContext.modal.showCalender()
         }
-        rootView.findViewById<View>(R.id.swipe_overlay).setOnTouchListener(object: View.OnTouchListener {
+        rootView.findViewById<View>(R.id.pinned_app_list_container).setOnTouchListener(object: View.OnTouchListener {
             var downX = 0f
             var downY = 0f
             override fun onTouch(

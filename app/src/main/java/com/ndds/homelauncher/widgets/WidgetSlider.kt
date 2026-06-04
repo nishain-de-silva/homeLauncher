@@ -8,9 +8,11 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -39,21 +41,39 @@ class WidgetSlider @JvmOverloads constructor(
     lateinit var appContext: MainActivity
     lateinit var widgetIDs: ArrayList<Int>
     lateinit var initialView: View
+    var initialHeight = 0
     val APPWIDGET_HOST_ID = 1024
     lateinit var appWidgetManager: AppWidgetManager
 
     private lateinit var requestWidgetBindFlow: ActivityResultLauncher<Intent>
+    private lateinit var configureWidgetSetting: ActivityResultLauncher<Intent>
     var appWidgetHost: AppWidgetHost? = null
     lateinit var longPressRunnable: Runnable
     var longPressHandler: Handler? = null
 
     private var onUserBindGranted: ((isGranted: Boolean) -> Unit)? = null
+    private var onWidgetConfigured: ((didConfigured: Boolean) -> Unit)? = null
 
     fun load(appContext: MainActivity) {
         this.appContext = appContext
         initialView = getChildAt(0)
+        initialView.post {
+            initialHeight = initialView.height
+        }
         widgetIDs = StorageService(context).getWidgetList()
         appWidgetManager = AppWidgetManager.getInstance(context)
+        configureWidgetSetting = appContext.registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+            { activityResult ->
+                if (activityResult.resultCode == Activity.RESULT_OK) {
+                    onWidgetConfigured?.invoke(true)
+                    onUserBindGranted = null
+                } else if (activityResult.resultCode == Activity.RESULT_CANCELED) {
+                    onWidgetConfigured?.invoke(false)
+                    onUserBindGranted = null
+                    Toast.makeText(context, "Widget not configured", Toast.LENGTH_SHORT).show()
+                }
+            })
         requestWidgetBindFlow = appContext.registerForActivityResult(
             ActivityResultContracts.StartActivityForResult(),
             { activityResult ->
@@ -104,10 +124,11 @@ class WidgetSlider @JvmOverloads constructor(
     private fun loadPage(isLeftSwipe: Boolean) {
         var nextView: View
         var targetHeight: Int
+        val currentHeight = height
         if (page == 0) {
             nextView = initialView
             nextView.visibility = VISIBLE
-            targetHeight = initialView.height
+            targetHeight = initialHeight
             if (appWidgetHost != null) {
                 appWidgetHost!!.stopListening()
                 appWidgetHost = null
@@ -129,10 +150,10 @@ class WidgetSlider @JvmOverloads constructor(
         animator.interpolator = DecelerateInterpolator()
         val closingView = getChildAt(childCount - 1)
         nextView.translationX = if (isLeftSwipe) width.toFloat() else -width.toFloat()
-        if (page != 0)
+        if (page != 0) {
             addView(nextView)
+        }
         val layoutParams = layoutParams
-        val currentHeight = height
         animator.addUpdateListener { animator ->
             if (isLeftSwipe) {
                 closingView.translationX = -animator.animatedFraction * width
@@ -164,13 +185,30 @@ class WidgetSlider @JvmOverloads constructor(
     }
 
     fun addPage(id: Int) {
-        if (widgetIDs.isEmpty()) {
-            widgetIDs.add(id)
-            page = 1
-        } else {
-            widgetIDs.add(page, id)
-            page++
+        val configure = appWidgetManager.getAppWidgetInfo(id).configure
+        if (configure != null) {
+            onWidgetConfigured = { didConfigured ->
+                if (didConfigured) {
+                    widgetIDs.add(page, id)
+                    page++
+                    StorageService(context).updateWidgetList(widgetIDs)
+                    loadPage(true)
+                } else {
+                    appWidgetHost!!.deleteAppWidgetId(id)
+                    if (widgetIDs.isEmpty()) {
+                        appWidgetHost!!.stopListening()
+                        this.appWidgetHost = null
+                    }
+                }
+            }
+            configureWidgetSetting.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+                .setComponent(configure)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+            )
+            return
         }
+        widgetIDs.add(page, id)
+        page++
         StorageService(context).updateWidgetList(widgetIDs)
         loadPage(true)
     }
@@ -183,13 +221,27 @@ class WidgetSlider @JvmOverloads constructor(
         )
         hostView.setAppWidget(id, widgetInfo)
         val widgetWidth = width - (2 * 35 * context.resources.displayMetrics.density).toInt()
+
         val widgetHeight = (widgetWidth * (widgetInfo.minHeight.toFloat() / widgetInfo.minWidth.toFloat())).toInt()
-        val layoutParams =  FrameLayout.LayoutParams(
+        val layoutParams = LayoutParams(
             widgetWidth,
             widgetHeight
         )
-        layoutParams.gravity = Gravity.CENTER_HORIZONTAL
+        layoutParams.gravity = Gravity.CENTER
         hostView.layoutParams = layoutParams
+        hostView.post {
+            val options = Bundle()
+            val widthDP = (widgetWidth / context.resources.displayMetrics.density).toInt()
+            val heightDP = (widgetHeight / context.resources.displayMetrics.density).toInt()
+
+            options.apply {
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDP);
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDP);
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDP);
+                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDP);
+            }
+            hostView.updateAppWidgetOptions(options)
+        }
         return hostView
     }
     private fun reArrangeWidgets() {
@@ -298,17 +350,28 @@ class WidgetSlider @JvmOverloads constructor(
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return handleTouch(event, true)
+    }
+
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        if (isOnTouchHandling) return false
+        return handleTouch(event, false)
+    }
+    private var isOnTouchHandling = false
+    fun handleTouch(event: MotionEvent, isOnTouchEvent: Boolean): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
+            isOnTouchHandling = isOnTouchEvent
             downX = event.x
             downY = event.y
+            purgeLongPressHandler()
             longPressRunnable = Runnable { handleLongPress() }
             longPressHandler = Handler(Looper.getMainLooper())
             longPressHandler!!.postDelayed(longPressRunnable,
                 ViewConfiguration.getLongPressTimeout().toLong())
             isLongPressPerformed = false
             isDragActionPerformed = false
-            return false
+            return isOnTouchEvent
         } else if (event.action == MotionEvent.ACTION_MOVE) {
             if (abs(downX - event.x) > 15 || abs(downY - event.y) > 15) {
                 purgeLongPressHandler()
@@ -332,12 +395,15 @@ class WidgetSlider @JvmOverloads constructor(
                     loadPage(isLeftSwipe)
                     return true
                 }
-                return false
+                return isOnTouchEvent
             }
         } else if (event.action == MotionEvent.ACTION_UP) {
+            if (isOnTouchEvent)
+                isOnTouchHandling = false
             purgeLongPressHandler()
             if (isLongPressPerformed || isDragActionPerformed)
                 return true
+            return isOnTouchEvent
         }
         return false
     }

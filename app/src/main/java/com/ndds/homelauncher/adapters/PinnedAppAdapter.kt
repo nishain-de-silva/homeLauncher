@@ -25,6 +25,7 @@ class PinnedAppAdapter(
     class Item(view: View): RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.icon)
         val name: CustomTextView = view.findViewById(R.id.name)
+        val dragHandle: View = view.findViewById(R.id.dragHandle)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -32,6 +33,7 @@ class PinnedAppAdapter(
         val app = appList[position]
         holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
+        holder.dragHandle.visibility = if (desktop.isEditMode) View.VISIBLE else View.GONE
 
         holder.itemView.setOnClickListener {
             if (!desktop.isEditMode)
@@ -49,7 +51,7 @@ class PinnedAppAdapter(
                     downX = event.x
                     downY = event.y
                     hasDragStarted = false
-                    return false
+                    return true
                 } else if (event.action == MotionEvent.ACTION_MOVE) {
                     if (abs(downY - event.y) < 10 && Math.abs(downX - event.x) < 10)
                         return false
@@ -60,7 +62,7 @@ class PinnedAppAdapter(
                         }
                     }
                 }
-                return false
+                return true
             }
         })
         holder.itemView.setOnLongClickListener {

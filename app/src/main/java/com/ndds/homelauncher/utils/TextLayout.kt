@@ -9,20 +9,26 @@ class TextLayout(val paint: Paint, text: String, availableWidth: Int) {
     private val lines = ArrayList<Node>()
     private var maxWidth: Float
     private class Node(var text: String, var lineWidth: Float)
-    private fun splitWord(inputText: String): List<String> {
-        val words = ArrayList<String>()
+    private fun splitWord(inputText: String, lines: ArrayList<Node>, maxWidth: Float): Float {
         var text = ""
+        var maxWidth = maxWidth
         for(i in 0 until inputText.length) {
             val c = inputText[i]
-            if (i > 0 && c in 'A'..'Z') {
-                words.add(text)
+            if (i > 0 && c in 'A'..'Z' && inputText[i - 1] in 'a'..'z') {
+                val lineWidth = paint.measureText(text)
+                if (lineWidth > maxWidth)
+                    maxWidth = lineWidth
+                lines.add(Node(text, lineWidth))
                 text = c.toString()
             } else {
                 text += c
             }
         }
-        words.add(text)
-        return words
+        val lineWidth = paint.measureText(text)
+        if (lineWidth > maxWidth)
+            maxWidth = lineWidth
+        lines.add(Node(text, lineWidth))
+        return maxWidth
     }
     init {
         fontHeight = -paint.fontMetrics.ascent + paint.fontMetrics.descent
@@ -32,12 +38,7 @@ class TextLayout(val paint: Paint, text: String, availableWidth: Int) {
         var node = Node(words[0], textWidth)
         maxWidth = -1f
         if (textWidth > availableWidth) {
-            splitWord(words[0]).forEach {
-                val wordWidth = paint.measureText(it)
-                if (wordWidth > maxWidth)
-                    maxWidth = wordWidth
-                lines.add(Node(it, wordWidth))
-            }
+            maxWidth = splitWord(words[0],lines, maxWidth)
         } else {
             maxWidth = textWidth
             lines.add(node)
@@ -53,10 +54,14 @@ class TextLayout(val paint: Paint, text: String, availableWidth: Int) {
                 node.lineWidth = textWidth
             } else {
                 textWidth = paint.measureText(word)
-                if (textWidth > maxWidth)
-                    maxWidth = textWidth
-                node = Node(word,textWidth)
-                lines.add(node)
+                if (textWidth > availableWidth)
+                    maxWidth = splitWord(word, lines, maxWidth)
+                else {
+                    if (textWidth > maxWidth)
+                        maxWidth = textWidth
+                    node = Node(word, textWidth)
+                    lines.add(node)
+                }
             }
         }
     }
