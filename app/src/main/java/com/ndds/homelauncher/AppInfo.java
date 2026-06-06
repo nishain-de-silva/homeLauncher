@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
      public boolean isPinned;
      public boolean isLastUsed;
      public boolean isFresh;
+     public int usedCount;
 
      public AppInfo(String name, String packageName, String activityName, Drawable icon) {
          this.id = name + packageName;

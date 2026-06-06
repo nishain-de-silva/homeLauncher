@@ -164,7 +164,12 @@ class AppDrawer(
              if (info.isFresh == info1.isFresh) {
                  if (info.isLastUsed) -1
                  else if (info1.isLastUsed) 1
-                 else info.name[0].code - info1.name[0].code
+                 else {
+                     val nameOrder = info.name[0].code - info1.name[0].code
+                     if (nameOrder == 0)
+                         return@sortWith info1.usedCount - info.usedCount
+                     return@sortWith nameOrder
+                 }
             } else
                 if (info.isFresh) -1 else 1
         }

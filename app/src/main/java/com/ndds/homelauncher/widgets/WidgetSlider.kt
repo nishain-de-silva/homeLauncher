@@ -57,7 +57,7 @@ class WidgetSlider @JvmOverloads constructor(
         this.appContext = appContext
         initialView = getChildAt(0)
         initialView.measure(
-            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST),
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
         initialHeight = initialView.measuredHeight

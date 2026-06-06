@@ -275,6 +275,7 @@ class MainActivity : AppCompatActivity() {
             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         lastUsedApp?.isLastUsed = false
         app.isLastUsed = true
+        app.usedCount++
         lastUsedApp = app
         startActivity(intent)
     }
