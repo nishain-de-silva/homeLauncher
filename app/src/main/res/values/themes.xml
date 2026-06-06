@@ -30,7 +30,7 @@
         <!-- Customize your theme here. -->
     </style>
     <style name="normalTextView" parent="Theme.Material3.DayNight.BottomSheetDialog">
-        <item name="backgroundTint">@color/accent_black</item>
+        <item name="backgroundTint">@color/accent_brown</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="fontFamily">@font/primary_bold</item>
     </style>

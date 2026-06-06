@@ -3,30 +3,40 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingVertical="10dp">
+    android:paddingEnd="10dp">
     <LinearLayout
+        android:id="@+id/widget_group_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:layout_marginBottom="12dp">
         <ImageView
             android:id="@+id/widget_app_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_marginEnd="12dp"
             />
         <TextView
-            android:id="@+id/widget_description"
+            android:id="@+id/appName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="15sp"
             android:textColor="@android:color/white"/>
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/widget_preview"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        />
+        android:layout_height="wrap_content">
+        <View
+            android:layout_width="3dp"
+            android:layout_marginHorizontal="17dp"
+            android:background="@color/accent_brown_light"
+            android:layout_height="match_parent" />
+        <LinearLayout
+            android:id="@+id/widget_container_per_app"
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
 </LinearLayout>

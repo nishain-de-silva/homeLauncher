@@ -43,6 +43,7 @@ class PinnedAppAdapter(
             var downX = 0f
             var downY = 0f
             var hasDragStarted = false;
+            val isEditMode = desktop.isEditMode
             override fun onTouch(
                 view: View,
                 event: MotionEvent
@@ -51,10 +52,10 @@ class PinnedAppAdapter(
                     downX = event.x
                     downY = event.y
                     hasDragStarted = false
-                    return true
+                    return isEditMode
                 } else if (event.action == MotionEvent.ACTION_MOVE) {
                     if (abs(downY - event.y) < 10 && Math.abs(downX - event.x) < 10)
-                        return false
+                        return isEditMode
                     if (Math.abs(downY - event.y) > Math.abs(downX - event.x)) {
                         if (desktop.isEditMode && !hasDragStarted) {
                             hasDragStarted = true
@@ -62,7 +63,7 @@ class PinnedAppAdapter(
                         }
                     }
                 }
-                return true
+                return isEditMode
             }
         })
         holder.itemView.setOnLongClickListener {

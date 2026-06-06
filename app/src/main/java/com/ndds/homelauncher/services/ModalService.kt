@@ -24,6 +24,7 @@ import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.adapters.ShortcutListAdapter
 import com.ndds.homelauncher.adapters.WidgetPreviewAdapter
+import com.ndds.homelauncher.utils.WidgetPreviewModel
 import com.ndds.homelauncher.widgets.ModalItem
 
 
@@ -113,6 +114,22 @@ class ModalService(val appContext: MainActivity) {
         val sheetDialog = appContext.sheetDialog
         val appWidgetManager = AppWidgetManager.getInstance(appContext)
         val initialView = LayoutInflater.from(appContext).inflate(R.layout.no_widget, null) as ViewGroup
+        val categoryData = ArrayList<WidgetPreviewModel>()
+        val pm = appContext.packageManager
+        appWidgetManager.installedProviders.forEach { provider ->
+            val group = categoryData.find { it.packageName.equals(provider.provider.packageName) }
+            if (group == null) {
+                val appInfo = pm.getApplicationInfo(provider.provider.packageName, 0)
+                categoryData.add(WidgetPreviewModel(
+                    appInfo.loadLabel(pm),
+                    provider.provider.packageName,
+                    appInfo.loadIcon(pm),
+                    arrayListOf(provider)
+                ))
+            } else {
+                group.widgets.add(provider)
+            }
+        }
         initialView.findViewById<ListView>(R.id.widget_list).adapter = WidgetPreviewAdapter(appContext,
             { selectedWidgetInfo ->
                 sheetDialog.dismissListener = {
@@ -120,7 +137,7 @@ class ModalService(val appContext: MainActivity) {
                 }
                 sheetDialog.dismiss()
             },
-            appWidgetManager.installedProviders
+            categoryData
         );
         sheetDialog.setContentView(initialView)
         sheetDialog.show()

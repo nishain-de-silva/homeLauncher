@@ -333,6 +333,6 @@ class DesktopSection(val appContext: MainActivity) {
     fun updateBatteryLevel(intent: Intent) {
         val percentage = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 1) * 100 /
                 intent.getIntExtra(BatteryManager.EXTRA_SCALE, 1)
-        rootView.findViewById<CustomTextView>(R.id.battery_level).text = "$percentage%"
+        rootView.findViewById<CustomTextView>(R.id.battery_level).text = "Battery $percentage%"
     }
 }

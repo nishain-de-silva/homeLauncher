@@ -1,10 +1,12 @@
 package com.ndds.homelauncher.widgets
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -12,7 +14,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -23,8 +24,6 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.marginStart
-import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -57,9 +56,11 @@ class WidgetSlider @JvmOverloads constructor(
     fun load(appContext: MainActivity) {
         this.appContext = appContext
         initialView = getChildAt(0)
-        initialView.post {
-            initialHeight = initialView.height
-        }
+        initialView.measure(
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        )
+        initialHeight = initialView.measuredHeight
         widgetIDs = StorageService(context).getWidgetList()
         appWidgetManager = AppWidgetManager.getInstance(context)
         configureWidgetSetting = appContext.registerForActivityResult(
@@ -121,7 +122,7 @@ class WidgetSlider @JvmOverloads constructor(
             }
         }
     }
-    private fun loadPage(isLeftSwipe: Boolean) {
+    private fun loadPage(isLeftSwipe: Boolean, isWidgetAdded: Boolean) {
         var nextView: View
         var targetHeight: Int
         val currentHeight = height
@@ -140,7 +141,25 @@ class WidgetSlider @JvmOverloads constructor(
             }
             val widgetID = widgetIDs[page - 1]
             val hostView = buildWidgetView(widgetID)
+            if (hostView == null) {
+                removeWidget()
+                return
+            }
             val widgetHeight = hostView.layoutParams.height
+            val widgetWidth = hostView.layoutParams.width
+            if (isWidgetAdded) {
+                val options = Bundle()
+                val widthDP = (widgetWidth / context.resources.displayMetrics.density).toInt()
+                val heightDP = (widgetHeight / context.resources.displayMetrics.density).toInt()
+
+                options.apply {
+                    putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDP)
+                    putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDP)
+                    putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDP)
+                    putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDP)
+                }
+                hostView.updateAppWidgetOptions(options)
+            }
             targetHeight = widgetHeight
             nextView = hostView
         }
@@ -192,7 +211,7 @@ class WidgetSlider @JvmOverloads constructor(
                     widgetIDs.add(page, id)
                     page++
                     StorageService(context).updateWidgetList(widgetIDs)
-                    loadPage(true)
+                    loadPage(true, true)
                 } else {
                     appWidgetHost!!.deleteAppWidgetId(id)
                     if (widgetIDs.isEmpty()) {
@@ -201,19 +220,52 @@ class WidgetSlider @JvmOverloads constructor(
                     }
                 }
             }
-            configureWidgetSetting.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
-                .setComponent(configure)
-                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-            )
-            return
+            try {
+                configureWidgetSetting.launch(
+                    Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+                        .setComponent(configure)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                )
+                return
+            } catch (ex: SecurityException) {
+                Toast.makeText(context, "Cannot configure the widget", Toast.LENGTH_SHORT).show()
+                ex.printStackTrace()
+            }
         }
         widgetIDs.add(page, id)
         page++
         StorageService(context).updateWidgetList(widgetIDs)
-        loadPage(true)
+        loadPage(true, true)
     }
-    fun buildWidgetView(id: Int): AppWidgetHostView {
-        val widgetInfo = appWidgetManager.getAppWidgetInfo(id)
+    @SuppressLint("ResourceType")
+    private fun getWidgetHeightRatio(widgetInfo: AppWidgetProviderInfo, widgetWidth: Int): Float {
+        var previewImageRatio = 0f
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && widgetInfo.previewLayout != 0) {
+            val widgetContext = context.createPackageContext(
+                widgetInfo.provider.packageName,
+                0
+            )
+            val previewLayout = LayoutInflater.from(
+                widgetContext
+            ).inflate(widgetInfo.previewLayout, null)
+            previewLayout.measure(
+                MeasureSpec.makeMeasureSpec(widgetWidth, MeasureSpec.AT_MOST),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            )
+            previewImageRatio = previewLayout.measuredHeight.toFloat() / previewLayout.measuredWidth
+        } else {
+            val previewImage = widgetInfo.loadPreviewImage(context, 0)
+            if (previewImage != null) {
+                previewImageRatio = previewImage.intrinsicHeight.toFloat() / previewImage.intrinsicWidth.toFloat()
+            }
+        }
+        val ratio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            widgetInfo.targetCellHeight.toFloat() / widgetInfo.targetCellWidth.toFloat()
+        else (widgetInfo.minHeight.toFloat() / widgetInfo.minWidth.toFloat())
+        return if (ratio > previewImageRatio) ratio else previewImageRatio
+    }
+    fun buildWidgetView(id: Int): AppWidgetHostView? {
+        val widgetInfo = appWidgetManager.getAppWidgetInfo(id) ?: return null
         val hostView = appWidgetHost!!.createView(
             context.applicationContext,
             id,
@@ -221,27 +273,14 @@ class WidgetSlider @JvmOverloads constructor(
         )
         hostView.setAppWidget(id, widgetInfo)
         val widgetWidth = width - (2 * 35 * context.resources.displayMetrics.density).toInt()
-
-        val widgetHeight = (widgetWidth * (widgetInfo.minHeight.toFloat() / widgetInfo.minWidth.toFloat())).toInt()
+     
+        val widgetHeight = (widgetWidth * getWidgetHeightRatio(widgetInfo, widgetWidth)).toInt()
         val layoutParams = LayoutParams(
             widgetWidth,
             widgetHeight
         )
         layoutParams.gravity = Gravity.CENTER
         hostView.layoutParams = layoutParams
-        hostView.post {
-            val options = Bundle()
-            val widthDP = (widgetWidth / context.resources.displayMetrics.density).toInt()
-            val heightDP = (widgetHeight / context.resources.displayMetrics.density).toInt()
-
-            options.apply {
-                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDP);
-                putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDP);
-                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDP);
-                putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDP);
-            }
-            hostView.updateAppWidgetOptions(options)
-        }
         return hostView
     }
     private fun reArrangeWidgets() {
@@ -279,11 +318,15 @@ class WidgetSlider @JvmOverloads constructor(
             }
 
         })
+        val data = ArrayList<Pair<Int, AppWidgetProviderInfo>>()
+        widgetIDs.forEach {
+            val info = appWidgetManager.getAppWidgetInfo(it)
+            if (info != null)
+                data.add(Pair(it, info))
+        }
         adapter = ReArrangeWidgetAdapter(
             appContext,
-            ArrayList(widgetIDs.map {
-                Pair(it, appWidgetManager.getAppWidgetInfo(it))
-            }),
+            data,
             itemTouchHelper
         )
 
@@ -298,7 +341,7 @@ class WidgetSlider @JvmOverloads constructor(
             val updatedData = ArrayList(adapter.data.map { it.first })
             val swappedID = updatedData[page - 1]
             if (swappedID != currentWidgetID) {
-                val hostView = buildWidgetView(swappedID)
+                val hostView = buildWidgetView(swappedID) ?: return@show
                 if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
                     hostView.startVisibilityTracking()
                 }
@@ -336,7 +379,7 @@ class WidgetSlider @JvmOverloads constructor(
         widgetIDs.removeAt(page - 1)
         page--
         StorageService(context).updateWidgetList(widgetIDs)
-        loadPage(false)
+        loadPage(false, false)
         Toast.makeText(context, "Widget removed", Toast.LENGTH_SHORT).show()
     }
     var downX = 0f
@@ -392,7 +435,7 @@ class WidgetSlider @JvmOverloads constructor(
                         else
                             page--
                     }
-                    loadPage(isLeftSwipe)
+                    loadPage(isLeftSwipe, false)
                     return true
                 }
                 return isOnTouchEvent

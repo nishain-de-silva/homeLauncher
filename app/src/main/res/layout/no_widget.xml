@@ -12,6 +12,7 @@
     <ListView
         android:id="@+id/widget_list"
         android:scrollbars="none"
+        android:dividerHeight="12dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
