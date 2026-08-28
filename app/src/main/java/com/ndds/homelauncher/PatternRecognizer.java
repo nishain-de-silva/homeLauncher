@@ -1,14 +1,20 @@
 package com.ndds.homelauncher;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.util.Log;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+
+import com.ndds.homelauncher.models.AppInfo;
+import com.ndds.homelauncher.utils.EdgeDetector;
+
+import java.io.File;
 
 public class PatternRecognizer {
     private static class EdgeNode {
-        EdgeNode() {
-
-        }
+        EdgeNode() {}
         EdgeNode(AppInfo appInfo, int viewCode, boolean isFreshInstall) {
             this.appInfo = appInfo;
             this.viewCode = viewCode;
@@ -37,10 +43,12 @@ public class PatternRecognizer {
     }
 
     private final Node root;
+    private final Context context;
     private int globalViewId;
     private final EdgeNode listRoot = new EdgeNode();
 
-    public PatternRecognizer() {
+    public PatternRecognizer(Context context) {
+        this.context = context;
         root = new Node(0);
     }
 
@@ -248,8 +256,9 @@ public class PatternRecognizer {
         return node;
     }
 
-    public void markStart() {
+    public boolean markStart() {
         globalViewId++;
+        return globalViewId == 1;
     }
 
     public void flushRemovedPackages() {
@@ -282,17 +291,22 @@ public class PatternRecognizer {
         return selectedNode.edgeNode;
     }
 
-    public AppInfo getAppFromDrawer(ResolveInfo resolveInfo, PackageManager pm) {
+    public AppInfo getAppFromDrawer(ResolveInfo resolveInfo, PackageManager pm, int appIconColor) {
         String label = resolveInfo.loadLabel(pm).toString();
         EdgeNode edgeNode = getEdgeNode(
                 label + resolveInfo.activityInfo.applicationInfo.packageName
         );
         if (edgeNode == null) {
+            Bitmap bitmap = null;
+            File iconImage = new File(context.getFilesDir(), label+resolveInfo.activityInfo.applicationInfo.packageName+".png");
+            if (iconImage.exists()) {
+                bitmap = BitmapFactory.decodeFile(iconImage.getAbsolutePath());
+            }
             AppInfo appInfo = new AppInfo(
                     label,
                     resolveInfo.activityInfo.applicationInfo.packageName,
                     resolveInfo.activityInfo.name,
-                    resolveInfo.loadIcon(pm)
+                    bitmap
             );
             addPackage(appInfo, globalViewId > 1);
             return appInfo;
@@ -300,8 +314,8 @@ public class PatternRecognizer {
         edgeNode.viewCode = globalViewId;
         return edgeNode.appInfo;
     }
-    public AppInfo getAppInfo(CharSequence packageName) {
-        EdgeNode e = getEdgeNode(packageName);
+    public AppInfo getAppInfo(CharSequence appId) {
+        EdgeNode e = getEdgeNode(appId);
         if (e != null)
             return e.appInfo;
         return null;

@@ -1,6 +1,5 @@
 package com.ndds.homelauncher
 
-import android.Manifest
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -8,12 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -21,32 +21,32 @@ import android.renderscript.ScriptIntrinsicBlur
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import java.io.File
-import kotlin.math.min
-import androidx.core.net.toUri
+import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.services.ModalService
+import com.ndds.homelauncher.services.StorageService
+import com.ndds.homelauncher.services.WordsTagsExtractor
+import com.ndds.homelauncher.utils.EdgeDetector
 import com.ndds.homelauncher.utils.SheetDialog
 import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
+import java.io.File
+import kotlin.math.min
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var requestPermission: ActivityResultLauncher<String>
     private var appInstallationListener: BroadcastReceiver? = null
     private var systemEventListener: BroadcastReceiver? = null
     lateinit var appDrawer: AppDrawer
     var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
-    var promptedStorageAccess = false
     val sheetDialog: SheetDialog = SheetDialog(this)
     lateinit var modal: ModalService
     lateinit var snackBar: SnackBar
@@ -100,69 +100,22 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+        WallpaperManager.getInstance(this).addOnColorsChangedListener({ colors, which -> configureWallpaper()}, Handler(Looper.getMainLooper()))
         findViewById<View>(R.id.root).apply {
             post {
                 WallpaperManager.getInstance(this@MainActivity).setWallpaperOffsets(windowToken, 0.5f, 0.5f)
             }
         }
-        requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission(), { permissionGranted ->
-            if (permissionGranted)
-                configureWallpaper()
-        })
         configureWallpaper()
     }
 
     fun configureWallpaper() {
         val wallpaperImage = findViewById<WallpaperImageView>(R.id.wallpaper)
         var bitmap: Bitmap? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val wallpaperManager = WallpaperManager.getInstance(this)
-            if (Environment.isExternalStorageManager()) {
-                if (ContextCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.READ_MEDIA_IMAGES
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    requestPermission.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                    return
-                }
-                val file =
-                    wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM)
-                if (file != null) {
-                    bitmap = BitmapFactory.decodeFileDescriptor(file.fileDescriptor)
-                    file.close()
-                }
-                if (promptedStorageAccess)
-                    promptedStorageAccess = false
-            } else {
-                if (!promptedStorageAccess) {
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                    intent.data = "package:${packageName}".toUri()
-                    startActivity(intent)
-                    promptedStorageAccess = true
-                    return
-                } else {
-                    val wallpaper = File(filesDir, "wallpaper.jpg")
-                    if (wallpaper.exists()) {
-                        bitmap = BitmapFactory.decodeFile(wallpaper.absolutePath)
-                    } else
-                        return
-                }
-            }
-        } else {
-            val wallpaper = File(filesDir, "wallpaper.jpg")
-            if (wallpaper.exists()) {
-                bitmap = BitmapFactory.decodeFile(wallpaper.absolutePath)
-            } else
-                return
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val wallpaper = File(filesDir, "wallpaper.jpg")
+        if (wallpaper.exists()) {
+            bitmap = BitmapFactory.decodeFile(wallpaper.absolutePath)
             wallpaperImage.setImageBitmap(bitmap)
-//            wallpaperImage.setRenderEffect(RenderEffect.createBlurEffect(80f,80f, Shader.TileMode.CLAMP))
-        } else {
-//            wallpaperImage.setImageBitmap(
-//                blurImageBackwardCompatible(bitmap, 80f)
-//            )
         }
     }
 
@@ -198,7 +151,6 @@ class MainActivity : AppCompatActivity() {
         packageChangeFilter.addDataScheme("package")
 
         systemEventFilter.addAction(Intent.ACTION_BATTERY_CHANGED)
-        systemEventFilter.addAction(Intent.ACTION_TIME_TICK)
         systemEventListener = object : BroadcastReceiver() {
             override fun onReceive(p0: Context?, intent: Intent?) {
                 if (intent == null) return
@@ -234,6 +186,10 @@ class MainActivity : AppCompatActivity() {
                                 "${appDetail.loadLabel(packageManager)} installed",
                                 appDetail.loadIcon(packageManager)
                             )
+                            WordsTagsExtractor().extractTags(appPackageName, { extractedWords ->
+                                if (extractedWords != null)
+                                    StorageService(this@MainActivity).addToAppDescription(appPackageName, extractedWords)
+                            })
                         }
                         for (resolveInfo in resolveInfos) {
                             appDrawer.addApp(
@@ -241,7 +197,7 @@ class MainActivity : AppCompatActivity() {
                                     resolveInfo.loadLabel(packageManager).toString(),
                                     resolveInfo.activityInfo.applicationInfo.packageName,
                                     resolveInfo.activityInfo.name,
-                                    resolveInfo.loadIcon(packageManager)
+                                    EdgeDetector().evaluate(resolveInfo.loadIcon(packageManager), Color.WHITE)
                                 ), isFreshInstall
                             )
                         }
@@ -249,6 +205,7 @@ class MainActivity : AppCompatActivity() {
                         throw RuntimeException(e)
                     }
                 } else if (intent.action == Intent.ACTION_PACKAGE_REMOVED) {
+                    StorageService(this@MainActivity).removeFromAppDescription(appPackageName)
                     appDrawer.reportUninstall(appPackageName)
                     desktopSection.reportUninstall(appPackageName)
                 }
@@ -274,6 +231,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent().setComponent(ComponentName(app.packageName, app.activityName))
             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         lastUsedApp?.isLastUsed = false
+        StorageService(this).recordLastUsedApp(app.id)
         app.isLastUsed = true
         app.usedCount++
         lastUsedApp = app
@@ -282,12 +240,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (promptedStorageAccess) {
-            configureWallpaper()
-        }
         registerInstallationReceiver()
         desktopSection.onResume()
-        appDrawer.refreshData()
+        val wallpaperColors = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+        appDrawer.refreshData(Color.WHITE)
         desktopSection.updateData(appDrawer.patternRecognizer)
     }
 

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:id="@+id/rootView"
+    android:layout_width="match_parent"
+    android:paddingHorizontal="35dp"
+    android:background="@color/accent_brown"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:text="Advanced Settings"
+        android:layout_marginBottom="12dp"
+        android:textSize="25sp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:gravity="center_vertical"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/updateAppDescDB"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Update App Descriptions"
+            android:paddingVertical="12dp"
+            android:textSize="15sp"
+            />
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:visibility="gone"
+            android:id="@+id/descr_download_progress"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            app:indicatorSize="20dp"
+            app:trackThickness="3dp"
+            app:indicatorColor="@color/white"
+            app:trackColor="#47FFFFFF"
+            app:indicatorDirectionCircular="clockwise"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/updateAppIcons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Update App Icons"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+    <TextView
+        android:id="@+id/backup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Backup data"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+    <TextView
+        android:id="@+id/restore"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Restore data"
+        android:paddingVertical="12dp"
+        android:textSize="15sp"
+        />
+</LinearLayout>

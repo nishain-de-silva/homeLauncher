@@ -226,11 +226,12 @@ class WidgetSlider @JvmOverloads constructor(
                         .setComponent(configure)
                         .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
                 )
-                return
             } catch (ex: SecurityException) {
                 Toast.makeText(context, "Cannot configure the widget", Toast.LENGTH_SHORT).show()
-                ex.printStackTrace()
+                onWidgetConfigured!!.invoke(false)
+                onWidgetConfigured = null
             }
+            return
         }
         widgetIDs.add(page, id)
         page++
@@ -239,7 +240,7 @@ class WidgetSlider @JvmOverloads constructor(
     }
     @SuppressLint("ResourceType")
     private fun getWidgetHeightRatio(widgetInfo: AppWidgetProviderInfo, widgetWidth: Int): Float {
-        var previewImageRatio = 0f
+        val ratios = ArrayList<Float>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && widgetInfo.previewLayout != 0) {
             val widgetContext = context.createPackageContext(
                 widgetInfo.provider.packageName,
@@ -252,17 +253,21 @@ class WidgetSlider @JvmOverloads constructor(
                 MeasureSpec.makeMeasureSpec(widgetWidth, MeasureSpec.AT_MOST),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             )
-            previewImageRatio = previewLayout.measuredHeight.toFloat() / previewLayout.measuredWidth
-        } else {
-            val previewImage = widgetInfo.loadPreviewImage(context, 0)
-            if (previewImage != null) {
-                previewImageRatio = previewImage.intrinsicHeight.toFloat() / previewImage.intrinsicWidth.toFloat()
-            }
+            ratios.add(previewLayout.measuredHeight.toFloat() / previewLayout.measuredWidth.toFloat())
         }
-        val ratio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            widgetInfo.targetCellHeight.toFloat() / widgetInfo.targetCellWidth.toFloat()
-        else (widgetInfo.minHeight.toFloat() / widgetInfo.minWidth.toFloat())
-        return if (ratio > previewImageRatio) ratio else previewImageRatio
+        val previewImage = widgetInfo.loadPreviewImage(context, 0)
+        if (previewImage != null) {
+            ratios.add(previewImage.intrinsicHeight.toFloat() / previewImage.intrinsicWidth.toFloat())
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            ratios.add(widgetInfo.targetCellHeight.toFloat() / widgetInfo.targetCellWidth.toFloat())
+        ratios.add(widgetInfo.minHeight.toFloat() / widgetInfo.minWidth.toFloat())
+        var maxRatio = 0f
+        for (ratio in ratios) {
+            if (ratio > maxRatio)
+                maxRatio = ratio
+        }
+        return maxRatio
     }
     fun buildWidgetView(id: Int): AppWidgetHostView? {
         val widgetInfo = appWidgetManager.getAppWidgetInfo(id) ?: return null

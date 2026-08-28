@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.DesktopSection
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
@@ -31,7 +31,7 @@ class PinnedAppAdapter(
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: Item, position: Int) {
         val app = appList[position]
-        holder.icon.setImageDrawable(app.icon)
+        holder.icon.setImageBitmap(app.icon)
         holder.name.text = app.name
         holder.dragHandle.visibility = if (desktop.isEditMode) View.VISIBLE else View.GONE
 

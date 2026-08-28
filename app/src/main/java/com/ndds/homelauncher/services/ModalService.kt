@@ -19,7 +19,7 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.net.toUri
-import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.adapters.ShortcutListAdapter
@@ -33,7 +33,8 @@ class ModalService(val appContext: MainActivity) {
     enum class Setting {
         WallpaperChange,
         ActivateEditPinList,
-        AddWidget
+        AddWidget,
+        AdvancedSettings
     }
 
 
@@ -163,8 +164,7 @@ class ModalService(val appContext: MainActivity) {
 
     fun showSettings(settingsCallback: (setting: Setting) -> Unit) {
         val dialogView = LayoutInflater.from(appContext).inflate(R.layout.home_settings_modal, null)
-        val sheetDialog =
-            appContext.sheetDialog//BottomSheetDialog(appContext, R.style.normalTextView)
+        val sheetDialog = appContext.sheetDialog
         sheetDialog.setContentView(dialogView)
         sheetDialog.show()
         dialogView.findViewById<TextView>(R.id.changeWallpaper).setOnClickListener {
@@ -177,6 +177,9 @@ class ModalService(val appContext: MainActivity) {
         }
         dialogView.findViewById<TextView>(R.id.add_widget).setOnClickListener {
             settingsCallback(Setting.AddWidget)
+        }
+        dialogView.findViewById<TextView>(R.id.advanced_settings).setOnClickListener {
+            settingsCallback(Setting.AdvancedSettings)
         }
         dialogView.findViewById<TextView>(R.id.defaultLauncherSetup).let {
             if (isDefaultHomeLauncher())

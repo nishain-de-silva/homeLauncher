@@ -6,10 +6,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
-import com.ndds.homelauncher.AppInfo
+import com.ndds.homelauncher.AppDescriptionPattern
+import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
-import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.widgets.CustomTextView
 
 class GridAppAdapter(
@@ -17,6 +17,7 @@ class GridAppAdapter(
     var apps: ArrayList<AppInfo>,
 ) : RecyclerView.Adapter<GridAppAdapter.ViewHolder>() {
     private var searchText: String = ""
+    val appDescriptionPattern: AppDescriptionPattern = AppDescriptionPattern()
     var filteredApps: List<AppInfo?> = arrayListOf()
     class ViewHolder(view: View, itemType: Int) :  RecyclerView.ViewHolder(view) {
         lateinit var icon: ImageView
@@ -66,6 +67,29 @@ class GridAppAdapter(
                     if (original.name.split(" ").any { it.contains(searchText, true) })
                         newData.add(original)
                 }
+            if (newData.isEmpty() && searchText.length >= 4) {
+                val searchWords = searchText.lowercase().split(" ")
+                val scores: HashMap<String, Int> = hashMapOf()
+                for (searchWord in searchWords) {
+                    val match = appDescriptionPattern.getMatch(searchWord)
+                    if (match != null) {
+                        match.packageNames.forEach {
+                            scores[it] = 1 + (scores[it] ?: 0)
+                        }
+                    }
+                }
+                if (!scores.isEmpty()) {
+                    var max = -1
+                    var maxScorePackage = ""
+                    scores.forEach {
+                        if (it.value > max) {
+                            max = it.value
+                            maxScorePackage = it.key
+                        }
+                    }
+                    newData.addAll(apps.filter({ scores.containsKey(it.packageName) }))
+                }
+            }
             if (newData.size % 4 != 0) {
                 val index = newData.size - (newData.size % 4)
                 val count = 4 - (newData.size % 4)
@@ -86,7 +110,7 @@ class GridAppAdapter(
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val app = filteredApps[position] ?: return
-        holder.icon.setImageDrawable(app.icon)
+        holder.icon.setImageBitmap(app.icon)
         holder.name.text = app.name
         if (app.isFresh || app.isLastUsed) {
             holder.indicator.visibility = View.VISIBLE

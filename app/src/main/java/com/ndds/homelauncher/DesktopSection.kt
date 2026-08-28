@@ -1,6 +1,8 @@
 package com.ndds.homelauncher
 
+import android.app.Activity
 import android.app.WallpaperManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
@@ -16,25 +18,32 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ndds.homelauncher.adapters.PinnedAppAdapter
+import com.ndds.homelauncher.models.AppInfo
+import com.ndds.homelauncher.models.AppInfoBackupData
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.widgets.CustomTextView
 import com.ndds.homelauncher.widgets.WidgetSlider
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.HashMap
 import java.util.Locale
 import kotlin.math.abs
 
@@ -46,6 +55,7 @@ class DesktopSection(val appContext: MainActivity) {
     var widgetSlider: WidgetSlider
     var pinnedAppList: ArrayList<String>
     var isFlashLightOn = false
+    var advancedSettingsContract: ActivityResultLauncher<Intent>
     fun initiateWallpaperControls() {
         val pickMedia = appContext.registerForActivityResult(ActivityResultContracts.PickVisualMedia(), { uri ->
             // Callback is invoked after the user selects a media item or closes the
@@ -82,11 +92,58 @@ class DesktopSection(val appContext: MainActivity) {
                         toggleEditState()
                     } else if (setting == ModalService.Setting.AddWidget) {
                         widgetSlider.promptToAddWidget()
+                    } else if (setting == ModalService.Setting.AdvancedSettings) {
+                        advancedSettingsContract.launch(Intent(appContext, SettingsActivity::class.java)
+                            .apply {
+                                val packageRecognizer = appContext.appDrawer.patternRecognizer
+                                val parsedData: ArrayList<AppInfoBackupData> = arrayListOf()
+                                for (packageName in pinnedAppList) {
+                                    val appInfo = packageRecognizer.getAppInfo(packageName)
+                                    parsedData.add(AppInfoBackupData(appInfo.name, appInfo.packageName, appInfo.activityName))
+                                }
+                                putExtra("pinnedApps", parsedData)
+                            })
                     }
                 })
         }
         rootView.findViewById<View>(R.id.default_widget_container).setOnClickListener(backgroundOnClickListener)
         rootView.setOnClickListener(backgroundOnClickListener)
+    }
+
+    private fun handleAdvancedSettingsResult(settingPayload: Intent) {
+        if (settingPayload.hasExtra("iconsUpdated")) {
+            appContext.appDrawer.patternRecognizer
+        }
+        if (settingPayload.hasExtra("pinnedApps")) {
+            val pinnedApps: ArrayList<AppInfoBackupData> = settingPayload.getParcelableArrayListExtra("pinnedApps")!!
+            val resolvedData: ArrayList<AppInfo> = arrayListOf()
+            val unavailableApps: ArrayList<String> = arrayListOf()
+            val pm = appContext.packageManager
+            pinnedApps.forEach {
+                val match = appContext.packageManager.resolveActivity(Intent().setComponent(
+                    ComponentName(it.packageName, it.activityName),
+                ), PackageManager.MATCH_ALL)
+                if (match == null) {
+                    unavailableApps.add(it.name)
+                    return@forEach
+                }
+                val appInfo = appContext.appDrawer.patternRecognizer.getAppInfo(match.loadLabel(pm).toString() + it.packageName)
+                appInfo.isPinned = true
+                resolvedData.add(appInfo)
+            }
+            adapter.appList = resolvedData
+            adapter.notifyDataSetChanged()
+            StorageService(appContext).updatePinnedApps(resolvedData)
+            val dialogView = LayoutInflater.from(appContext).inflate(R.layout.backup_success, null)
+            val sheetDialog = appContext.sheetDialog
+            sheetDialog.setContentView(dialogView)
+            dialogView.findViewById<TextView>(R.id.restoration_message).text = if (unavailableApps.isEmpty()) "All Your favourite apps are successfully restored" else "Most of Your favourite apps are successfully restored except "+unavailableApps.joinToString(separator = ", ")
+            sheetDialog.show()
+        }
+        val longDescriptionMapping = settingPayload.getSerializableExtra("longDescriptionMapping") as? HashMap<String, JSONArray>
+        if (longDescriptionMapping != null) {
+            appContext.appDrawer.updateAppDescriptionDB(longDescriptionMapping)
+        }
     }
 
     fun addApp(app: AppInfo) {
@@ -128,6 +185,12 @@ class DesktopSection(val appContext: MainActivity) {
 
      init {
          initiateWallpaperControls()
+         advancedSettingsContract = appContext.registerForActivityResult(ActivityResultContracts.StartActivityForResult(), {
+             result ->
+             if (result.resultCode == Activity.RESULT_OK) {
+                 handleAdvancedSettingsResult(result.data!!)
+             }
+         })
         pinnedAppList = StorageService(appContext).getPinnedApps()
         val appListView = rootView.findViewById<RecyclerView>(R.id.fav_app_list)
          widgetSlider = rootView.findViewById(R.id.widget_slider)
