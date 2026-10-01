@@ -7,10 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
+import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,7 +22,6 @@ import android.renderscript.ScriptIntrinsicBlur
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -39,6 +39,8 @@ import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
 import java.io.File
 import kotlin.math.min
+import androidx.core.graphics.drawable.toDrawable
+import com.ndds.homelauncher.utils.WallpaperColor
 
 
 class MainActivity : AppCompatActivity() {
@@ -100,7 +102,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-        WallpaperManager.getInstance(this).addOnColorsChangedListener({ colors, which -> configureWallpaper()}, Handler(Looper.getMainLooper()))
+        WallpaperManager.getInstance(this).addOnColorsChangedListener({ colors, which ->
+            configureWallpaper()
+        }, Handler(Looper.getMainLooper()))
         findViewById<View>(R.id.root).apply {
             post {
                 WallpaperManager.getInstance(this@MainActivity).setWallpaperOffsets(windowToken, 0.5f, 0.5f)
@@ -191,13 +195,14 @@ class MainActivity : AppCompatActivity() {
                                     StorageService(this@MainActivity).addToAppDescription(appPackageName, extractedWords)
                             })
                         }
+                        val monochromeColor = WallpaperColor.getPrimaryColor(this@MainActivity);
                         for (resolveInfo in resolveInfos) {
                             appDrawer.addApp(
                                 AppInfo(
                                     resolveInfo.loadLabel(packageManager).toString(),
                                     resolveInfo.activityInfo.applicationInfo.packageName,
                                     resolveInfo.activityInfo.name,
-                                    EdgeDetector().evaluate(resolveInfo.loadIcon(packageManager), Color.WHITE)
+                                    EdgeDetector.loadAppIcon(this@MainActivity, resolveInfo, monochromeColor),
                                 ), isFreshInstall
                             )
                         }
@@ -241,9 +246,17 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         registerInstallationReceiver()
+        val storageService = StorageService(this)
+        var refreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
+        val colors = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+        if (storageService.isWallpaperColorSignatureDifferent(colors)) {
+            EdgeDetector.extractAllAppIcons(this)
+            if(storageService.getMonoChromeIconColor()) {
+                refreshMode = PatternRecognizer.IconRefreshMode.MONOCHROME_ICON
+            }
+        }
         desktopSection.onResume()
-        val wallpaperColors = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-        appDrawer.refreshData(Color.WHITE)
+        appDrawer.refreshData(refreshMode, WallpaperColor.getPrimaryColor(this))
         desktopSection.updateData(appDrawer.patternRecognizer)
     }
 

@@ -1,21 +1,25 @@
 package com.ndds.homelauncher.utils
 
 import android.animation.ValueAnimator
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.MeasureSpec
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.widgets.ModalItem
 
-class SheetDialog(val appContext: MainActivity) {
+class SheetDialog(val appContext: AppCompatActivity) {
     var modalView: View? = null
     var dismissListener: (() -> Unit)? = null
     var isShowing = false
@@ -44,7 +48,15 @@ class SheetDialog(val appContext: MainActivity) {
         val modalBackdrop = modalView!!.findViewById<View>(R.id.modal_backdrop)
         val modalContainer = modalView!!.findViewById<ViewGroup>(R.id.modal_container)
         modalContainer.addView(content)
-        modalContainer.updatePadding(bottom = appContext.findViewById<View>(R.id.home_section).paddingBottom)
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+             val bottomMargin = appContext.window.decorView.rootWindowInsets.getInsets(
+                 WindowInsets.Type.systemBars()
+                         or WindowInsets.Type.displayCutout()
+                         or WindowInsets.Type.ime()
+             ).bottom
+             modalContainer.updatePadding(bottom = bottomMargin)
+         }
+//        modalContainer.updatePadding(bottom = appContext.findViewById<View>(R.id.home_section).paddingBottom)
         modalContainer.measure(
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)

@@ -3,8 +3,8 @@ package com.ndds.homelauncher;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.ndds.homelauncher.models.AppInfo;
@@ -290,26 +290,48 @@ public class PatternRecognizer {
         }
         return selectedNode.edgeNode;
     }
-
-    public AppInfo getAppFromDrawer(ResolveInfo resolveInfo, PackageManager pm, int appIconColor) {
+    public enum IconRefreshMode {
+        NO_REFRESH,
+        MONOCHROME_ICON,
+        COLOR_ICON
+    }
+    public AppInfo getAppFromDrawer(ResolveInfo resolveInfo, PackageManager pm, IconRefreshMode iconRefreshMode, int monochromeColor) {
         String label = resolveInfo.loadLabel(pm).toString();
         EdgeNode edgeNode = getEdgeNode(
                 label + resolveInfo.activityInfo.applicationInfo.packageName
         );
         if (edgeNode == null) {
-            Bitmap bitmap = null;
-            File iconImage = new File(context.getFilesDir(), label+resolveInfo.activityInfo.applicationInfo.packageName+".png");
-            if (iconImage.exists()) {
-                bitmap = BitmapFactory.decodeFile(iconImage.getAbsolutePath());
+            Drawable iconDrawable;
+            if (globalViewId == 1) {
+                File iconImage = new File(context.getFilesDir(), label + resolveInfo.activityInfo.applicationInfo.packageName + ".png");
+                if (iconImage.exists()) {
+                    iconDrawable = new BitmapDrawable(context.getResources(), BitmapFactory.decodeFile(iconImage.getAbsolutePath()));
+                } else {
+                    iconDrawable = resolveInfo.loadIcon(pm);
+                }
+            } else {
+                iconDrawable = EdgeDetector.Companion.loadAppIcon(context, resolveInfo, monochromeColor);
             }
             AppInfo appInfo = new AppInfo(
                     label,
                     resolveInfo.activityInfo.applicationInfo.packageName,
                     resolveInfo.activityInfo.name,
-                    bitmap
+                    iconDrawable
             );
             addPackage(appInfo, globalViewId > 1);
             return appInfo;
+        } else if (iconRefreshMode != IconRefreshMode.NO_REFRESH) {
+            Drawable iconDrawable;
+            if (iconRefreshMode == IconRefreshMode.MONOCHROME_ICON) {
+                File iconImage = new File(context.getFilesDir(), label+resolveInfo.activityInfo.applicationInfo.packageName+".png");
+                if (iconImage.exists()) {
+                    iconDrawable = new BitmapDrawable(context.getResources(), BitmapFactory.decodeFile(iconImage.getAbsolutePath()));
+                } else {
+                    iconDrawable = resolveInfo.loadIcon(pm);
+                }
+            } else
+                iconDrawable = resolveInfo.loadIcon(pm);
+            edgeNode.appInfo.icon = iconDrawable;
         }
         edgeNode.viewCode = globalViewId;
         return edgeNode.appInfo;

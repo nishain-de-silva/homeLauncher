@@ -10,4 +10,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="accent_brown">#231714</color>
     <color name="accent_brown_light">#452F2C</color>
+    <color name="accent_brown_test">#ffa54f</color>
 </resources>

@@ -5,7 +5,6 @@
     android:layout_height="match_parent">
     <com.ndds.homelauncher.widgets.WallpaperImageView
         android:id="@+id/wallpaper"
-        android:background="#96000000"
         android:visibility="gone"
         android:scaleType="centerCrop"
         android:layout_width="match_parent"
@@ -38,8 +37,7 @@
                         android:paddingHorizontal="10dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:background="@drawable/transparent_black_box">
+                        android:orientation="vertical">
                         <com.ndds.homelauncher.widgets.CustomTextView
                             android:id="@+id/time"
                             android:textColor="@android:color/white"

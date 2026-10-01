@@ -37,6 +37,7 @@ import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.models.AppInfoBackupData
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
+import com.ndds.homelauncher.utils.WallpaperColor
 import com.ndds.homelauncher.widgets.CustomTextView
 import com.ndds.homelauncher.widgets.WidgetSlider
 import org.json.JSONArray
@@ -95,6 +96,7 @@ class DesktopSection(val appContext: MainActivity) {
                     } else if (setting == ModalService.Setting.AdvancedSettings) {
                         advancedSettingsContract.launch(Intent(appContext, SettingsActivity::class.java)
                             .apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
                                 val packageRecognizer = appContext.appDrawer.patternRecognizer
                                 val parsedData: ArrayList<AppInfoBackupData> = arrayListOf()
                                 for (packageName in pinnedAppList) {
@@ -111,8 +113,14 @@ class DesktopSection(val appContext: MainActivity) {
     }
 
     private fun handleAdvancedSettingsResult(settingPayload: Intent) {
-        if (settingPayload.hasExtra("iconsUpdated")) {
-            appContext.appDrawer.patternRecognizer
+        if (settingPayload.hasExtra("refreshIcons")) {
+            appContext.appDrawer.refreshData(
+                PatternRecognizer.IconRefreshMode.valueOf(
+                    settingPayload.getStringExtra("refreshIcons")!!
+                ),
+                WallpaperColor.getPrimaryColor(appContext)
+            )
+            appContext.desktopSection.adapter.notifyDataSetChanged()
         }
         if (settingPayload.hasExtra("pinnedApps")) {
             val pinnedApps: ArrayList<AppInfoBackupData> = settingPayload.getParcelableArrayListExtra("pinnedApps")!!

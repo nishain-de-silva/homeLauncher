@@ -31,7 +31,7 @@ class PinnedAppAdapter(
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: Item, position: Int) {
         val app = appList[position]
-        holder.icon.setImageBitmap(app.icon)
+        holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
         holder.dragHandle.visibility = if (desktop.isEditMode) View.VISIBLE else View.GONE
 

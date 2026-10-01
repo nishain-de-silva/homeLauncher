@@ -11,6 +11,7 @@ import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.widgets.CustomTextView
+import kotlin.math.min
 
 class GridAppAdapter(
     val appContext: MainActivity,
@@ -51,24 +52,50 @@ class GridAppAdapter(
         this.searchText = searchText
         refresh()
     }
+    fun isContainSearchText(searchText: String, inputText: String): Boolean {
+        var matchIndex = 0
+        var previousCharType = 0
+        for (c in inputText) {
+            if (matchIndex > 0) {
+                if (c.lowercaseChar() == searchText[matchIndex]) {
+                    matchIndex++
+                    if (matchIndex == searchText.length)
+                        return true
+                } else
+                    matchIndex = 0
+            }
+            var charType: Int
+            if (c == ' ') charType = 0
+            else if (c in 'a'..'z') charType = 1
+            else charType = 2
+
+            if ((charType == 1 && previousCharType != 1) || (charType == 2 && previousCharType != 2)) {
+                if (matchIndex == 0) {
+                    if (c.lowercaseChar() == searchText[0]) {
+                        matchIndex++
+                        if (matchIndex == searchText.length)
+                            return true
+                    }
+                }
+            }
+            previousCharType = charType
+        }
+        return false
+    }
 
     fun refresh() {
-        val searchText = searchText.trim()
+        val searchText = searchText.trim().lowercase()
         if (searchText.isEmpty())
             filteredApps = apps
         else {
             val newData: ArrayList<AppInfo?> = arrayListOf()
             apps.forEach { original ->
-                if (original.name.split(" ").any { it.startsWith(searchText, true) })
+                if (isContainSearchText(searchText, original.name))
                     newData.add(original)
             }
-            if (newData.isEmpty())
-                apps.forEach { original ->
-                    if (original.name.split(" ").any { it.contains(searchText, true) })
-                        newData.add(original)
-                }
+
             if (newData.isEmpty() && searchText.length >= 4) {
-                val searchWords = searchText.lowercase().split(" ")
+                val searchWords = searchText.split(" ")
                 val scores: HashMap<String, Int> = hashMapOf()
                 for (searchWord in searchWords) {
                     val match = appDescriptionPattern.getMatch(searchWord)
@@ -110,7 +137,7 @@ class GridAppAdapter(
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val app = filteredApps[position] ?: return
-        holder.icon.setImageBitmap(app.icon)
+        holder.icon.setImageDrawable(app.icon)
         holder.name.text = app.name
         if (app.isFresh || app.isLastUsed) {
             holder.indicator.visibility = View.VISIBLE
