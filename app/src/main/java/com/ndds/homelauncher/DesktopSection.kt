@@ -37,6 +37,7 @@ import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.models.AppInfoBackupData
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
+import com.ndds.homelauncher.utils.EdgeDetector
 import com.ndds.homelauncher.utils.WallpaperColor
 import com.ndds.homelauncher.widgets.CustomTextView
 import com.ndds.homelauncher.widgets.WidgetSlider
@@ -114,13 +115,17 @@ class DesktopSection(val appContext: MainActivity) {
 
     private fun handleAdvancedSettingsResult(settingPayload: Intent) {
         if (settingPayload.hasExtra("refreshIcons")) {
-            appContext.appDrawer.refreshData(
-                PatternRecognizer.IconRefreshMode.valueOf(
-                    settingPayload.getStringExtra("refreshIcons")!!
-                ),
-                WallpaperColor.getPrimaryColor(appContext)
-            )
-            appContext.desktopSection.adapter.notifyDataSetChanged()
+            val refreshMode = PatternRecognizer.IconRefreshMode.valueOf(settingPayload.getStringExtra("refreshIcons")!!)
+            if (refreshMode == PatternRecognizer.IconRefreshMode.MONOCHROME_ICON) {
+                Thread {
+                    EdgeDetector.extractAllAppIcons(appContext)
+                    appContext.runOnUiThread {
+                        Toast.makeText(appContext, "Refreshing app icons", Toast.LENGTH_SHORT).show()
+                        appContext.refreshListData(PatternRecognizer.IconRefreshMode.MONOCHROME_ICON)
+                    }
+                }.start()
+            } else
+                appContext.nextRefreshMode = refreshMode
         }
         if (settingPayload.hasExtra("pinnedApps")) {
             val pinnedApps: ArrayList<AppInfoBackupData> = settingPayload.getParcelableArrayListExtra("pinnedApps")!!

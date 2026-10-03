@@ -7,11 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,6 +19,7 @@ import android.renderscript.ScriptIntrinsicBlur
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -39,7 +37,6 @@ import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
 import java.io.File
 import kotlin.math.min
-import androidx.core.graphics.drawable.toDrawable
 import com.ndds.homelauncher.utils.WallpaperColor
 
 
@@ -50,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
     val sheetDialog: SheetDialog = SheetDialog(this)
+    var nextRefreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
     lateinit var modal: ModalService
     lateinit var snackBar: SnackBar
 
@@ -247,19 +245,27 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         registerInstallationReceiver()
         val storageService = StorageService(this)
-        var refreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
+        val shouldUseMonochrome = storageService.useMonochromeColor()
         val colors = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
-        if (storageService.isWallpaperColorSignatureDifferent(colors)) {
-            EdgeDetector.extractAllAppIcons(this)
-            if(storageService.getMonoChromeIconColor()) {
-                refreshMode = PatternRecognizer.IconRefreshMode.MONOCHROME_ICON
+        if (nextRefreshMode == PatternRecognizer.IconRefreshMode.NO_REFRESH && shouldUseMonochrome) {
+            if (storageService.isWallpaperColorSignatureDifferent(colors)) {
+                Thread() {
+                    EdgeDetector.extractAllAppIcons(this)
+                    runOnUiThread {
+                        Toast.makeText(this, "Refreshing app icons", Toast.LENGTH_SHORT).show()
+                        refreshListData(PatternRecognizer.IconRefreshMode.MONOCHROME_ICON)
+                    }
+                }.start()
             }
         }
         desktopSection.onResume()
+        refreshListData(nextRefreshMode)
+        nextRefreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
+    }
+    public fun refreshListData(refreshMode: PatternRecognizer.IconRefreshMode) {
         appDrawer.refreshData(refreshMode, WallpaperColor.getPrimaryColor(this))
         desktopSection.updateData(appDrawer.patternRecognizer)
     }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (sheetDialog.dismiss()) {

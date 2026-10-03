@@ -12,6 +12,7 @@ import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.ColorUtils
 import kotlin.math.abs
 import kotlin.math.sqrt
 import androidx.core.graphics.createBitmap
@@ -118,9 +119,8 @@ class EdgeDetector {
         val r1 = ((lineColor shr 16) and 0xff)
         val g1 = ((lineColor shr 8) and 0xff)
         val b1 = (lineColor and 0xff)
-        val rGrayscale = (r1 + g1 + b1) / 3f
         val iconPixels = IntArray(width * height)
-
+        val outPixels = IntArray(iconPixels.size)
         bitmap.getPixels(iconPixels, 0, width, 0, 0, width, height)
         var maxBrightness = 0f
         for (i in 0 until iconPixels.size) {
@@ -132,7 +132,6 @@ class EdgeDetector {
             if (brightnessAmount > maxBrightness)
                 maxBrightness = brightnessAmount
         }
-        val random = Random(42)
         for (i in 0 until iconPixels.size) {
             val p = iconPixels[i]
             val r = ((p shr 16) and 0xff)
@@ -144,25 +143,18 @@ class EdgeDetector {
             val g2 = capValue((brightnessAmount * g1).toInt())
             val b2 = capValue((brightnessAmount * b1).toInt())
 
-            val mixAmt = if (random.nextBoolean()) 0.2f else 0.0f
+            val mixAmt = 0.1
             val or = (r2 + ((r - r2) * mixAmt)).toInt()
             val og = (g2 + ((g - g2) * mixAmt)).toInt()
             val ob = (b2 + ((b - b2) * mixAmt)).toInt()
-            iconPixels[i] = a or (or shl 16) or (og shl 8) or ob
-
+            outPixels[i] = a or (or shl 16) or (og shl 8) or ob
         }
-        return Bitmap.createBitmap(iconPixels, width, height, Bitmap.Config.ARGB_8888)
+        return Bitmap.createBitmap(outPixels, width, height, Bitmap.Config.ARGB_8888)
     }
 
-    fun evaluate2(iconDrawable: Drawable, lineColor: Int): Bitmap {
-        val bitmap = convertDrawableToBitmap2(iconDrawable)
-        val width = bitmap.width
-        val height = bitmap.height
-        val iconPixels = IntArray(width * height)
-        bitmap.getPixels(iconPixels, 0, width, 0, 0, width, height)
+    fun evaluate2(iconPixels: IntArray, width: Int, height: Int, lineColor: Int, destPixels: IntArray): Bitmap {
         val strokeWidth = 1
         val averageMaskSize = 10
-        val out = IntArray(width * height)
         val floatBuffer = FloatArray(3)
         val floatBuffer2 = FloatArray(3)
         for (y in averageMaskSize until height - averageMaskSize) {
@@ -177,7 +169,7 @@ class EdgeDetector {
                 if (getHueDistance(floatBuffer, floatBuffer2)) {
                     for (sy in -strokeWidth until strokeWidth + 1) {
                         for (sx in -strokeWidth until strokeWidth + 1) {
-                            out[width * sy + sx + i] = lineColor
+                            destPixels[width * sy + sx + i] = lineColor
                         }
                     }
                 } else {
@@ -186,13 +178,13 @@ class EdgeDetector {
                     if (getHueDistance(floatBuffer, floatBuffer2)) {
                         for (sy in -strokeWidth until strokeWidth + 1) {
                             for (sx in -strokeWidth until strokeWidth + 1) {
-                                out[width * sy + sx + i] = lineColor
+                                destPixels[width * sy + sx + i] = lineColor
                             }
                         }
                     }
                 }
             }
         }
-        return Bitmap.createBitmap(out, width, height, Bitmap.Config.ARGB_8888)
+        return Bitmap.createBitmap(destPixels, width, height, Bitmap.Config.ARGB_8888)
     }
 }

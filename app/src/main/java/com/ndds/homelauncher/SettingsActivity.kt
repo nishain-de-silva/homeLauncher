@@ -3,22 +3,13 @@ package com.ndds.homelauncher
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.graphics.Bitmap
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.GridLayout
 import android.widget.ProgressBar
-import android.widget.Switch
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -33,7 +24,6 @@ import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.services.WordsTagsExtractor
 import com.ndds.homelauncher.utils.EdgeDetector
 import com.ndds.homelauncher.utils.SheetDialog
-import com.ndds.homelauncher.utils.WallpaperColor
 
 class SettingsActivity : AppCompatActivity() {
     val sheetDialog: SheetDialog = SheetDialog(this)
@@ -107,14 +97,14 @@ class SettingsActivity : AppCompatActivity() {
 
         val monochromeIconSwitch = findViewById<SwitchMaterial>(R.id.is_use_monochrome_icons)
         val storageService = StorageService(this)
-        monochromeIconSwitch.isChecked = storageService.getMonoChromeIconColor()
+        monochromeIconSwitch.isChecked = storageService.useMonochromeColor()
 
         monochromeIconSwitch.setOnCheckedChangeListener { _, isChecked ->
             storageService.setUseMonoChromeIconColor(isChecked)
-            if (isChecked) {
-                EdgeDetector.extractAllAppIcons(this@SettingsActivity)
-                Toast.makeText(this@SettingsActivity, "Completed", Toast.LENGTH_SHORT).show()
-            }
+//            if (isChecked) {
+//                EdgeDetector.extractAllAppIcons(this@SettingsActivity)
+//                Toast.makeText(this@SettingsActivity, "Completed", Toast.LENGTH_SHORT).show()
+//            }
 
             setResult(
                 RESULT_OK,

@@ -3,7 +3,6 @@ package com.ndds.homelauncher.services
 import android.app.WallpaperColors
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.util.Log
 import androidx.core.content.edit
 import com.ndds.homelauncher.models.AppInfo
 import org.json.JSONArray
@@ -101,7 +100,7 @@ class StorageService(context: Context) {
         sharedPreferences.edit { putString("appList", appArray.joinToString("|")) }
     }
 
-    fun getMonoChromeIconColor(): Boolean {
+    fun useMonochromeColor(): Boolean {
         return sharedPreferences.getBoolean("useMonochrome", false)
     }
 
@@ -109,7 +108,9 @@ class StorageService(context: Context) {
         if (isMonochrome)
             sharedPreferences.edit { putBoolean("useMonochrome", true) }
         else
-            sharedPreferences.edit { remove("useMonochrome") }
+            sharedPreferences.edit {
+                remove("useMonochrome")
+            }
     }
 
     fun isWallpaperColorSignatureDifferent(colors: WallpaperColors?): Boolean {
@@ -122,7 +123,6 @@ class StorageService(context: Context) {
             if (colors.tertiaryColor != null)
                 signature += colors.tertiaryColor
             sharedPreferences.edit() {
-
                 putString("wallpaperSignature", signature)
             }
         }
