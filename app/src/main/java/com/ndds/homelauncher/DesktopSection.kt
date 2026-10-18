@@ -38,11 +38,9 @@ import com.ndds.homelauncher.models.AppInfoBackupData
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.utils.EdgeDetector
-import com.ndds.homelauncher.utils.WallpaperColor
 import com.ndds.homelauncher.widgets.CustomTextView
 import com.ndds.homelauncher.widgets.WidgetSlider
 import org.json.JSONArray
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.HashMap
@@ -128,11 +126,15 @@ class DesktopSection(val appContext: MainActivity) {
                 appContext.nextRefreshMode = refreshMode
         }
         if (settingPayload.hasExtra("pinnedApps")) {
-            val pinnedApps: ArrayList<AppInfoBackupData> = settingPayload.getParcelableArrayListExtra("pinnedApps")!!
-            val resolvedData: ArrayList<AppInfo> = arrayListOf()
+            val receivedList: ArrayList<AppInfoBackupData> = settingPayload.getParcelableArrayListExtra("pinnedApps")!!
             val unavailableApps: ArrayList<String> = arrayListOf()
+            val resolvedData: ArrayList<AppInfo> = arrayListOf()
             val pm = appContext.packageManager
-            pinnedApps.forEach {
+            for(current in adapter.appList) {
+                current.isPinned = false
+            }
+            pinnedAppList.clear()
+            receivedList.forEach {
                 val match = appContext.packageManager.resolveActivity(Intent().setComponent(
                     ComponentName(it.packageName, it.activityName),
                 ), PackageManager.MATCH_ALL)
@@ -140,12 +142,11 @@ class DesktopSection(val appContext: MainActivity) {
                     unavailableApps.add(it.name)
                     return@forEach
                 }
-                val appInfo = appContext.appDrawer.patternRecognizer.getAppInfo(match.loadLabel(pm).toString() + it.packageName)
-                appInfo.isPinned = true
+                val id = match.loadLabel(pm).toString() + it.packageName
+                val appInfo = appContext.appDrawer.patternRecognizer.getAppInfo(id)
+                pinnedAppList.add(id)
                 resolvedData.add(appInfo)
             }
-            adapter.appList = resolvedData
-            adapter.notifyDataSetChanged()
             StorageService(appContext).updatePinnedApps(resolvedData)
             val dialogView = LayoutInflater.from(appContext).inflate(R.layout.backup_success, null)
             val sheetDialog = appContext.sheetDialog

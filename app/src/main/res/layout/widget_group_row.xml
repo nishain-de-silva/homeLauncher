@@ -27,6 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <View
+            android:id="@+id/group_indicator"
             android:layout_width="3dp"
             android:layout_marginHorizontal="17dp"
             android:background="@color/accent_brown_light"

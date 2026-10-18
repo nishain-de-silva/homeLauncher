@@ -40,6 +40,7 @@
         <activity
             android:name=".SettingsActivity"
             android:screenOrientation="portrait"
+            android:finishOnTaskLaunch="true"
             android:exported="true" />
     </application>
 </manifest>

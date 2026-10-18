@@ -37,7 +37,7 @@ import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
 import java.io.File
 import kotlin.math.min
-import com.ndds.homelauncher.utils.WallpaperColor
+import com.ndds.homelauncher.utils.ColorTool
 
 
 class MainActivity : AppCompatActivity() {
@@ -193,7 +193,7 @@ class MainActivity : AppCompatActivity() {
                                     StorageService(this@MainActivity).addToAppDescription(appPackageName, extractedWords)
                             })
                         }
-                        val monochromeColor = WallpaperColor.getPrimaryColor(this@MainActivity);
+                        val monochromeColor = ColorTool.getLightPrimaryColorFromWallpaper(this@MainActivity);
                         for (resolveInfo in resolveInfos) {
                             appDrawer.addApp(
                                 AppInfo(
@@ -263,11 +263,12 @@ class MainActivity : AppCompatActivity() {
         nextRefreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
     }
     public fun refreshListData(refreshMode: PatternRecognizer.IconRefreshMode) {
-        appDrawer.refreshData(refreshMode, WallpaperColor.getPrimaryColor(this))
+        appDrawer.refreshData(refreshMode, ColorTool.getLightPrimaryColorFromWallpaper(this))
         desktopSection.updateData(appDrawer.patternRecognizer)
     }
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        SettingsActivity.close?.invoke()
         if (sheetDialog.dismiss()) {
             appDrawer.closeDrawer()
             desktopSection.dismissEditStateIfNeeded()

@@ -3,6 +3,8 @@ package com.ndds.homelauncher.adapters
 import android.annotation.SuppressLint
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +14,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import com.ndds.homelauncher.R
+import com.ndds.homelauncher.utils.ColorTool
 import com.ndds.homelauncher.utils.WidgetPreviewModel
 import kotlin.text.isNotEmpty
 
@@ -19,7 +22,7 @@ class WidgetPreviewAdapter(val appContext: Context,
                            val onPress: (item: AppWidgetProviderInfo) -> Unit,
                            val data: List<WidgetPreviewModel>
 ): ArrayAdapter<WidgetPreviewModel>(appContext,0,data) {
-
+    val lightColor = ColorTool.getLightPrimaryColorFromWallpaper(appContext)
     @SuppressLint("ResourceType")
     private fun loadWidgetsInGroup(widgetInfo: WidgetPreviewModel, widgetContainer: ViewGroup) {
         val widgetContext = context.createPackageContext(
@@ -61,7 +64,8 @@ class WidgetPreviewAdapter(val appContext: Context,
     }
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         var row = (convertView ?: LayoutInflater.from(appContext).inflate(R.layout.widget_group_row, parent, false)) as ViewGroup
-
+        if (convertView == null)
+            (row.findViewById<View>(R.id.group_indicator).background as ColorDrawable).color = lightColor
         val widgetInfo = data[position]
         val widgetContainer = row.findViewById<ViewGroup>(R.id.widget_container_per_app)
         widgetContainer.visibility = if (widgetInfo.expanded) View.VISIBLE else View.GONE

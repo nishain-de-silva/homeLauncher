@@ -1,6 +1,10 @@
 package com.ndds.homelauncher.utils
 
 import android.animation.ValueAnimator
+import android.content.res.ColorStateList
+import android.graphics.ColorFilter
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ShapeDrawable
 import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
@@ -47,6 +51,7 @@ class SheetDialog(val appContext: AppCompatActivity) {
         modalView = LayoutInflater.from(appContext).inflate(R.layout.modal_view, null)
         val modalBackdrop = modalView!!.findViewById<View>(R.id.modal_backdrop)
         val modalContainer = modalView!!.findViewById<ViewGroup>(R.id.modal_container)
+        (modalContainer.background as GradientDrawable).setColor(ColorTool.getDarkPrimaryColorFromWallpaper(appContext))
         modalContainer.addView(content)
          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
              val bottomMargin = appContext.window.decorView.rootWindowInsets.getInsets(

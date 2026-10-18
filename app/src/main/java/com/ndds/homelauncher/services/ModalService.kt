@@ -24,6 +24,7 @@ import com.ndds.homelauncher.MainActivity
 import com.ndds.homelauncher.R
 import com.ndds.homelauncher.adapters.ShortcutListAdapter
 import com.ndds.homelauncher.adapters.WidgetPreviewAdapter
+import com.ndds.homelauncher.utils.ColorTool
 import com.ndds.homelauncher.utils.WidgetPreviewModel
 import com.ndds.homelauncher.widgets.ModalItem
 

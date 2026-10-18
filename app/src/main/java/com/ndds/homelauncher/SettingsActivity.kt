@@ -26,8 +26,9 @@ import com.ndds.homelauncher.utils.EdgeDetector
 import com.ndds.homelauncher.utils.SheetDialog
 
 class SettingsActivity : AppCompatActivity() {
-    val sheetDialog: SheetDialog = SheetDialog(this)
-
+    companion object SettingsActivityInterface {
+        var close: (() -> Unit)? = null
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_layout)
@@ -101,11 +102,6 @@ class SettingsActivity : AppCompatActivity() {
 
         monochromeIconSwitch.setOnCheckedChangeListener { _, isChecked ->
             storageService.setUseMonoChromeIconColor(isChecked)
-//            if (isChecked) {
-//                EdgeDetector.extractAllAppIcons(this@SettingsActivity)
-//                Toast.makeText(this@SettingsActivity, "Completed", Toast.LENGTH_SHORT).show()
-//            }
-
             setResult(
                 RESULT_OK,
                 Intent().putExtra(
@@ -120,6 +116,12 @@ class SettingsActivity : AppCompatActivity() {
             )
         }
     }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        finish()
+    }
+
 
     fun extractDescriptionFromApp(
         index: Int,

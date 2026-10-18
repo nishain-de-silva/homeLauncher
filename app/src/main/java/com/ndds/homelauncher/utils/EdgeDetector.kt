@@ -12,14 +12,11 @@ import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import androidx.core.graphics.ColorUtils
+import android.os.Build
 import kotlin.math.abs
 import kotlin.math.sqrt
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
-import kotlin.math.hypot
-import kotlin.math.min
-import kotlin.random.Random
 
 class EdgeDetector {
     val threshold = 0.15
@@ -84,7 +81,7 @@ class EdgeDetector {
             for (resolveInfo in resolveInfoList) {
                 val packageName = resolveInfo.activityInfo.applicationInfo.packageName
                 val icon = resolveInfo.loadIcon(pm)
-                val bitmap = EdgeDetector().evaluate(icon, WallpaperColor.getPrimaryColor(context))
+                val bitmap = EdgeDetector().evaluate(icon, ColorTool.getLightPrimaryColorFromWallpaper(context))
                 val id = "${resolveInfo.loadLabel(pm)}$packageName"
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, context.openFileOutput("$id.png", MODE_PRIVATE))
             }
@@ -112,6 +109,9 @@ class EdgeDetector {
         if (value > 255) return 255
         return value
     }
+    fun luminance(r: Int, g: Int, b: Int): Float {
+        return (r * 0.2126 + g * 0.7152 + b * 0.0722).toFloat()
+    }
     fun evaluate(iconDrawable: Drawable, lineColor: Int): Bitmap {
         val bitmap = convertDrawableToBitmap(iconDrawable, lineColor)
         val width = bitmap.width
@@ -122,15 +122,15 @@ class EdgeDetector {
         val iconPixels = IntArray(width * height)
         val outPixels = IntArray(iconPixels.size)
         bitmap.getPixels(iconPixels, 0, width, 0, 0, width, height)
-        var maxBrightness = 0f
+        var maxLuminance = 0f
         for (i in 0 until iconPixels.size) {
             val p = iconPixels[i]
             val r = ((p shr 16) and 0xff)
             val g = ((p shr 8) and 0xff)
             val b = (p and 0xff)
-            val brightnessAmount = ((r + g + b) / 3f)
-            if (brightnessAmount > maxBrightness)
-                maxBrightness = brightnessAmount
+            val luminanceAmount = luminance(r, g, b)
+            if (luminanceAmount > maxLuminance)
+                maxLuminance = luminanceAmount
         }
         for (i in 0 until iconPixels.size) {
             val p = iconPixels[i]
@@ -138,10 +138,10 @@ class EdgeDetector {
             val g = ((p shr 8) and 0xff)
             val b = (p and 0xff)
             val a = (p and 0xff000000.toInt())
-            val brightnessAmount = ((r + g + b) / 3f) / maxBrightness
-            val r2 = capValue((brightnessAmount * r1).toInt())
-            val g2 = capValue((brightnessAmount * g1).toInt())
-            val b2 = capValue((brightnessAmount * b1).toInt())
+            val luminanceAmount = luminance(r, g, b) / maxLuminance
+            val r2 = capValue((luminanceAmount * r1).toInt())
+            val g2 = capValue((luminanceAmount * g1).toInt())
+            val b2 = capValue((luminanceAmount * b1).toInt())
 
             val mixAmt = 0.1
             val or = (r2 + ((r - r2) * mixAmt)).toInt()
