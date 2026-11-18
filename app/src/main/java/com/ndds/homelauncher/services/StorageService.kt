@@ -61,22 +61,6 @@ class StorageService(context: Context) {
         }
     }
 
-    fun getWidgetID(): Int {
-        return sharedPreferences.getInt("widgetID", -1)
-    }
-
-    fun saveWidgetID(id: Int) {
-        return sharedPreferences.edit {
-            putInt("widgetID", id)
-        }
-    }
-
-    fun removeWidgetID() {
-        return sharedPreferences.edit {
-            remove("widgetID")
-        }
-    }
-
     fun updatePinnedApps(updatedList: List<AppInfo>) {
         sharedPreferences.edit {
             putString("appList", updatedList.map { it.id }.joinToString("|"))
@@ -99,36 +83,6 @@ class StorageService(context: Context) {
         appArray.remove(app.id)
         sharedPreferences.edit { putString("appList", appArray.joinToString("|")) }
     }
-
-    fun useMonochromeColor(): Boolean {
-        return sharedPreferences.getBoolean("useMonochrome", false)
-    }
-
-    fun setUseMonoChromeIconColor(isMonochrome: Boolean) {
-        if (isMonochrome)
-            sharedPreferences.edit { putBoolean("useMonochrome", true) }
-        else
-            sharedPreferences.edit {
-                remove("useMonochrome")
-            }
-    }
-
-    fun isWallpaperColorSignatureDifferent(colors: WallpaperColors?): Boolean {
-        val currentValue = sharedPreferences.getString("wallpaperSignature", null)
-        var signature = ""
-        if (colors != null) {
-            colors.primaryColor.toString()
-            if (colors.secondaryColor != null)
-                signature += colors.secondaryColor
-            if (colors.tertiaryColor != null)
-                signature += colors.tertiaryColor
-            sharedPreferences.edit() {
-                putString("wallpaperSignature", signature)
-            }
-        }
-        return currentValue == null || !currentValue.equals(signature);
-    }
-
     fun recordLastUsedApp(id: String) {
         sharedPreferences.edit { putString("lastUsedApp", id) }
     }

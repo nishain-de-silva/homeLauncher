@@ -31,7 +31,6 @@ import com.ndds.homelauncher.models.AppInfo
 import com.ndds.homelauncher.services.ModalService
 import com.ndds.homelauncher.services.StorageService
 import com.ndds.homelauncher.services.WordsTagsExtractor
-import com.ndds.homelauncher.utils.EdgeDetector
 import com.ndds.homelauncher.utils.SheetDialog
 import com.ndds.homelauncher.utils.SnackBar
 import com.ndds.homelauncher.widgets.WallpaperImageView
@@ -47,7 +46,6 @@ class MainActivity : AppCompatActivity() {
     var lastUsedApp: AppInfo? = null
     lateinit var desktopSection: DesktopSection
     val sheetDialog: SheetDialog = SheetDialog(this)
-    var nextRefreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
     lateinit var modal: ModalService
     lateinit var snackBar: SnackBar
 
@@ -200,7 +198,7 @@ class MainActivity : AppCompatActivity() {
                                     resolveInfo.loadLabel(packageManager).toString(),
                                     resolveInfo.activityInfo.applicationInfo.packageName,
                                     resolveInfo.activityInfo.name,
-                                    EdgeDetector.loadAppIcon(this@MainActivity, resolveInfo, monochromeColor),
+                                    resolveInfo.loadIcon(packageManager),
                                 ), isFreshInstall
                             )
                         }
@@ -244,26 +242,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         registerInstallationReceiver()
-        val storageService = StorageService(this)
-        val shouldUseMonochrome = storageService.useMonochromeColor()
-        val colors = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
-        if (nextRefreshMode == PatternRecognizer.IconRefreshMode.NO_REFRESH && shouldUseMonochrome) {
-            if (storageService.isWallpaperColorSignatureDifferent(colors)) {
-                Thread() {
-                    EdgeDetector.extractAllAppIcons(this)
-                    runOnUiThread {
-                        Toast.makeText(this, "Refreshing app icons", Toast.LENGTH_SHORT).show()
-                        refreshListData(PatternRecognizer.IconRefreshMode.MONOCHROME_ICON)
-                    }
-                }.start()
-            }
-        }
         desktopSection.onResume()
-        refreshListData(nextRefreshMode)
-        nextRefreshMode = PatternRecognizer.IconRefreshMode.NO_REFRESH
+        refreshListData()
     }
-    public fun refreshListData(refreshMode: PatternRecognizer.IconRefreshMode) {
-        appDrawer.refreshData(refreshMode, ColorTool.getLightPrimaryColorFromWallpaper(this))
+    public fun refreshListData() {
+        appDrawer.refreshData()
         desktopSection.updateData(appDrawer.patternRecognizer)
     }
     override fun onNewIntent(intent: Intent?) {

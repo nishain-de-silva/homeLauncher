@@ -200,7 +200,7 @@ class AppDrawer(
         adapter.refresh()
     }
 
-    fun refreshData(reloadIconsMode: PatternRecognizer.IconRefreshMode, monochromeColor: Int) {
+    fun refreshData() {
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         val pm = appContext.packageManager
@@ -209,7 +209,7 @@ class AppDrawer(
         val newData = arrayListOf<AppInfo>()
         val isInitialLoad = patternRecognizer.markStart()
         for (info in resolveInfoList) {
-            val app = patternRecognizer.getAppFromDrawer(info, pm, reloadIconsMode, monochromeColor)
+            val app = patternRecognizer.getAppFromDrawer(info, pm)
             newData.add(app)
         }
         if (isInitialLoad) {

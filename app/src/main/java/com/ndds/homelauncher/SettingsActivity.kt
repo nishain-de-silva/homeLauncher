@@ -10,20 +10,16 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.ndds.homelauncher.models.AppInfoBackupData
+import com.ndds.homelauncher.services.WordsTagsExtractor
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import androidx.core.content.edit
-import com.google.android.material.switchmaterial.SwitchMaterial
-import com.ndds.homelauncher.services.StorageService
-import com.ndds.homelauncher.services.WordsTagsExtractor
-import com.ndds.homelauncher.utils.EdgeDetector
-import com.ndds.homelauncher.utils.SheetDialog
 
 class SettingsActivity : AppCompatActivity() {
     companion object SettingsActivityInterface {
@@ -64,6 +60,7 @@ class SettingsActivity : AppCompatActivity() {
                         )
                     }
                     setResult(RESULT_OK, Intent().putExtra("pinnedApps", resolvedData))
+                    Log.d("info", "apps restored!");
                     Toast.makeText(this, "App restored successfully", Toast.LENGTH_SHORT).show()
                 } catch (_: JSONException) {
                     Toast.makeText(this, "Invalid backup file selected", Toast.LENGTH_SHORT).show()
@@ -95,31 +92,6 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.updateAppDescDB).setOnClickListener {
             extractAllAppDescriptions()
         }
-
-        val monochromeIconSwitch = findViewById<SwitchMaterial>(R.id.is_use_monochrome_icons)
-        val storageService = StorageService(this)
-        monochromeIconSwitch.isChecked = storageService.useMonochromeColor()
-
-        monochromeIconSwitch.setOnCheckedChangeListener { _, isChecked ->
-            storageService.setUseMonoChromeIconColor(isChecked)
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(
-                    "refreshIcons",
-                    (
-                            if (isChecked)
-                                PatternRecognizer.IconRefreshMode.MONOCHROME_ICON
-                            else
-                                PatternRecognizer.IconRefreshMode.COLOR_ICON
-                            ).toString()
-                )
-            )
-        }
-    }
-
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        finish()
     }
 
 
